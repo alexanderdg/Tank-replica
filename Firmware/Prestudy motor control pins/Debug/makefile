@@ -54,8 +54,8 @@ all: main-build
 main-build: Prestudy\ motor\ control\ pins.elf secondary-outputs
 
 # Tool invocations
-Prestudy\ motor\ control\ pins.elf: $(OBJS) $(USER_OBJS) D:\Drive\Labo\Tank\Prestudy\ motor\ control\ pins\STM32F302R8TX_FLASH.ld
-	arm-none-eabi-gcc -o "Prestudy motor control pins.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Drive\Labo\Tank\Prestudy motor control pins\STM32F302R8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Prestudy motor control pins.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Prestudy\ motor\ control\ pins.elf: $(OBJS) $(USER_OBJS) D:\Drive\Labo\Tank-replica\Firmware\Prestudy\ motor\ control\ pins\STM32F302R8TX_FLASH.ld
+	arm-none-eabi-gcc -o "Prestudy motor control pins.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Drive\Labo\Tank-replica\Firmware\Prestudy motor control pins\STM32F302R8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Prestudy motor control pins.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

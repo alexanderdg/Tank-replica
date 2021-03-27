@@ -89,6 +89,8 @@ uint8_t pwm_target_left = 100;
 uint8_t pwm_target_right = 100;
 uint8_t pwm_left = 100;
 uint8_t pwm_right = 100;
+uint8_t GD_FAULT = 0;
+uint8_t OV_FAULT = 0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -284,10 +286,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  currentLSB = (current - currentMSB)*100;
   	  	  data[1] = currentMSB;
   	  	  data[2] = currentLSB;
+  	  	  data[3] = adcBuffer[1] >> 8;
+  	  	  data[4] = adcBuffer[1];
   	  	  TxMessage.StdId = 0;
   	  	  TxMessage.IDE = CAN_ID_STD;
   	  	  TxMessage.RTR = CAN_RTR_DATA;
-  	  	  TxMessage.DLC = 3;
+  	  	  TxMessage.DLC = 5;
   	  	  TxMessage.TransmitGlobalTime = DISABLE;
   	  	  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
   	  		  Error_Handler();
@@ -320,10 +324,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  voltageLSB = (voltage - voltageMSB) * 100;
   		  data[1] = voltageMSB;
   		  data[2] = voltageLSB;
+  		  data[3] = adcBuffer[0] >> 8;
+  		  data[4] = adcBuffer[0];
   		  TxMessage.StdId = 0;
   		  TxMessage.IDE = CAN_ID_STD;
   		  TxMessage.RTR = CAN_RTR_DATA;
-  		  TxMessage.DLC = 3;
+  		  TxMessage.DLC = 5;
   		  TxMessage.TransmitGlobalTime = DISABLE;
   		  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
   			  Error_Handler();
@@ -396,7 +402,14 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(pwm_target_left != pwm_left || pwm_target_right != pwm_right)
+	  if(OV_FAULT == 1 || GD_FAULT == 1)
+	  {
+		  setPWMLeft(100);
+		  setPWMRight(100);
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+	  }
+	  else if(pwm_target_left != pwm_left || pwm_target_right != pwm_right)
 	  {
 		  if(pwm_target_left > pwm_left)
 		  {
@@ -414,8 +427,14 @@ int main(void)
 		  {
 		  	  setPWMRight(pwm_right - 1);
 		  }
+		  HAL_Delay(accl);
 	  }
-	  HAL_Delay(accl);
+	  if(adcBuffer[0] > 1100 && OV_FAULT == 0)
+	  {
+		  OV_FAULT = 1;
+	  }
+
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
