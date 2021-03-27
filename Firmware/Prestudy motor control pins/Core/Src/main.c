@@ -103,6 +103,13 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 }
 */
 
+float getInputVoltage()
+{
+	uint32_t temp = adcBuffer[0];
+	uint32_t shuntVoltage = (801 * temp);
+	float voltage = (shuntVoltage * 18.414) / 1000000;
+	return voltage;
+}
 
 void sendACK()
 {
@@ -286,12 +293,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  currentLSB = (current - currentMSB)*100;
   	  	  data[1] = currentMSB;
   	  	  data[2] = currentLSB;
-  	  	  data[3] = adcBuffer[1] >> 8;
-  	  	  data[4] = adcBuffer[1];
   	  	  TxMessage.StdId = 0;
   	  	  TxMessage.IDE = CAN_ID_STD;
   	  	  TxMessage.RTR = CAN_RTR_DATA;
-  	  	  TxMessage.DLC = 5;
+  	  	  TxMessage.DLC = 3;
   	  	  TxMessage.TransmitGlobalTime = DISABLE;
   	  	  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
   	  		  Error_Handler();
@@ -317,9 +322,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  break;
   	  case 102:
   		  //----------- Battery voltage -----------//
-  		  mb = adcBuffer[0];
-  		  shuntVoltage = (801 * mb);
-  		  voltage = (shuntVoltage * 18.414) / 1000000;
+  		  voltage = getInputVoltage();
   		  voltageMSB = voltage;
   		  voltageLSB = (voltage - voltageMSB) * 100;
   		  data[1] = voltageMSB;
@@ -406,8 +409,8 @@ int main(void)
 	  {
 		  setPWMLeft(100);
 		  setPWMRight(100);
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
 	  }
 	  else if(pwm_target_left != pwm_left || pwm_target_right != pwm_right)
 	  {
@@ -429,12 +432,15 @@ int main(void)
 		  }
 		  HAL_Delay(accl);
 	  }
-	  if(adcBuffer[0] > 1100 && OV_FAULT == 0)
+	  float inputVoltage = getInputVoltage();
+	  if(inputVoltage > 29.2 && OV_FAULT == 0)
 	  {
 		  OV_FAULT = 1;
 	  }
-
-
+	  if((!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8) || !HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9)) && GD_FAULT == 0)
+	  {
+		  GD_FAULT = 1;
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -536,7 +542,7 @@ static void MX_ADC1_Init(void)
   sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_19CYCLES_5;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -1016,11 +1022,6 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 }
 
