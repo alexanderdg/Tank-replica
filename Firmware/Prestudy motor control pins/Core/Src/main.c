@@ -81,16 +81,22 @@ static void MX_TIM17_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
+#define OVERVOLTAGE 29.2
+#define ID 1
+
 uint16_t adcBuffer[3];
 uint16_t counter = 0;
 uint8_t accl = 20;
-uint8_t decl = 1;
+uint8_t decl = 5;
 uint8_t pwm_target_left = 100;
 uint8_t pwm_target_right = 100;
 uint8_t pwm_left = 100;
 uint8_t pwm_right = 100;
 uint8_t GD_FAULT = 0;
 uint8_t OV_FAULT = 0;
+long timertick = 0;
+long old_timertick_accl = 0;
+long old_timertick_decl = 0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -114,15 +120,12 @@ float getInputVoltage()
 void sendACK()
 {
 	uint32_t mb;
-	uint8_t data[] = {1, 1, 1, 1};
+	uint8_t data[] = {ID, 1};
 	TxMessage.StdId = 0;
 	TxMessage.IDE = CAN_ID_STD;
 	TxMessage.RTR = CAN_RTR_DATA;
-	TxMessage.DLC = 4;
+	TxMessage.DLC = 2;
 	TxMessage.TransmitGlobalTime = DISABLE;
-	data[1] = adcBuffer[0] >> 8;
-	data[2] = adcBuffer[1] >> 8;
-	data[3] = adcBuffer[2] >> 8;
 	if (HAL_CAN_AddTxMessage(&hcan, &TxMessage, data, &mb) != HAL_OK) {
 	    Error_Handler();
 	}
@@ -131,7 +134,7 @@ void sendACK()
 void sendNACK()
 {
 	uint32_t mb;
-	uint8_t data[] = {1, 0};
+	uint8_t data[] = {ID, 0};
 	TxMessage.StdId = 0;
 	TxMessage.IDE = CAN_ID_STD;
 	TxMessage.RTR = CAN_RTR_DATA;
@@ -158,10 +161,10 @@ void setPWMLeft(int PWM)
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
 		PWM_local = 100 - PWM;
 	}
-	int temp = PWM_local * 32 + 1;
-	if(temp > 3300)
+	int temp = PWM_local * 4 + 1;
+	if(temp > 401)
 	{
-		temp = 3300;
+		temp = 401;
 	}
 	__HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, temp);
 }
@@ -181,10 +184,10 @@ void setPWMRight(int PWM)
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);
 		PWM_local = 100 - PWM;
 	}
-	int temp = PWM_local * 32 + 1;
-	if(temp > 3300)
+	int temp = PWM_local * 4 + 1;
+	if(temp > 401)
 	{
-		temp = 3300;
+		temp = 401;
 	}
 	__HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_2, temp);
 }
@@ -199,7 +202,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   uint32_t shuntVoltage;
   uint8_t currentLSB, currentMSB, voltageLSB, voltageMSB;
   float current, voltage;
-  uint8_t data[] = {1,0,0,0,0,0,0,0};
+  uint8_t data[] = {ID,0,0,0,0,0,0,0};
   switch(RxData[0])
   {
   	  case 0:
@@ -224,6 +227,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  //Set Phase pins low
   		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
   		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
+  		  pwm_target_right = 100;
+		  pwm_target_left = 100;
   		  setPWMLeft(100);
   		  setPWMRight(100);
   		  sendACK();
@@ -274,14 +279,35 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  else pwm_target_right = RxData[1];
   		  sendACK();
   		  break;
+  	  case 7:
+  		  //----------- Manual right motor -----------//
+  		  if(RxData[1] > 200) pwm_target_left = 200;
+  		  else pwm_target_left = RxData[1];
+  		  if(RxData[2] > 200) pwm_target_right = 200;
+  		  else pwm_target_right = RxData[2];
+  		  sendACK();
+  		  break;
   	  case 10:
+  		  //----------- Set acceleration -----------//
   		  if(RxData[1] > 100) accl = 100;
   		  else accl = RxData[1];
   		  sendACK();
   		  break;
   	  case 11:
+  		  //----------- Set deceleration -----------//
+  		  if(RxData[1] > 100) decl = 100;
+  		  else decl = RxData[1];
+  		  sendACK();
+  	  case 12:
+  		  //----------- Set max torque -----------//
   		  if(RxData[1] > 100) DAC1->DHR12R1 = 4024;
   		  else DAC1->DHR12R1 = RxData[1] * 40;
+  		  sendACK();
+  		  break;
+  	  case 13:
+  		  //----------- Reset faults -----------//
+  		  OV_FAULT = 0;
+  		  GD_FAULT = 0;
   		  sendACK();
   		  break;
   	  case 100:
@@ -327,15 +353,26 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  voltageLSB = (voltage - voltageMSB) * 100;
   		  data[1] = voltageMSB;
   		  data[2] = voltageLSB;
-  		  data[3] = adcBuffer[0] >> 8;
-  		  data[4] = adcBuffer[0];
+  		  TxMessage.StdId = 0;
+  		  TxMessage.IDE = CAN_ID_STD;
+  		  TxMessage.RTR = CAN_RTR_DATA;
+  		  TxMessage.DLC = 3;
+  		  TxMessage.TransmitGlobalTime = DISABLE;
+  		  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
+  			  Error_Handler();
+  		  }
+  		  break;
+  	  case 103:
+  		  //----------- Get Status -----------//
+  		  data[1] = OV_FAULT;
+  		  data[2] = GD_FAULT;
   		  TxMessage.StdId = 0;
   		  TxMessage.IDE = CAN_ID_STD;
   		  TxMessage.RTR = CAN_RTR_DATA;
   		  TxMessage.DLC = 5;
   		  TxMessage.TransmitGlobalTime = DISABLE;
   		  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
-  			  Error_Handler();
+  		    Error_Handler();
   		  }
   		  break;
   };
@@ -397,7 +434,7 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcBuffer, 3);
   HAL_NVIC_SetPriority(CAN_RX0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(CAN_RX0_IRQn);
-  DAC1->DHR12R1 = 3000;
+  DAC1->DHR12R1 = 4000;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -405,42 +442,94 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(OV_FAULT == 1 || GD_FAULT == 1)
+	  timertick = HAL_GetTick();
+	  if(OV_FAULT == 1)
 	  {
-		  setPWMLeft(100);
-		  setPWMRight(100);
-	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+	  	  setPWMLeft(100);
+	  	  setPWMRight(100);
+	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
 	  }
 	  else if(pwm_target_left != pwm_left || pwm_target_right != pwm_right)
 	  {
-		  if(pwm_target_left > pwm_left)
+		  if((timertick - old_timertick_accl) >= accl)
 		  {
-			  setPWMLeft(pwm_left + 1);
+			  old_timertick_accl = timertick;
+			  if(pwm_left < 100)
+			  {
+				  if(pwm_target_left < pwm_left)
+				  {
+					  setPWMLeft(pwm_left - 1);
+				  }
+			  }
+			  else
+			  {
+				  if(pwm_target_left > pwm_left)
+				  {
+					  setPWMLeft(pwm_left + 1);
+				  }
+			  }
+			  if(pwm_right < 100)
+			  {
+				  if(pwm_target_right < pwm_right)
+				  {
+					  setPWMRight(pwm_right - 1);
+				  }
+			  }
+			  else
+			  {
+				  if(pwm_target_right > pwm_right)
+				  {
+					  setPWMRight(pwm_right + 1);
+				  }
+			  }
 		  }
-		  else if(pwm_target_left < pwm_left)
+		  if((timertick - old_timertick_decl) >= decl)
 		  {
-			  setPWMLeft(pwm_left - 1);
+			  old_timertick_decl = timertick;
+			  if(pwm_left < 100)
+			  {
+				  if(pwm_target_left > pwm_left)
+				  {
+					  setPWMLeft(pwm_left + 1);
+				  }
+			  }
+			  else
+			  {
+				  if(pwm_target_left < pwm_left)
+				  {
+				  	  setPWMLeft(pwm_left - 1);
+				  }
+			  }
+			  if(pwm_right < 100)
+			  {
+				  if(pwm_target_right > pwm_right)
+				  {
+				  	  setPWMRight(pwm_right + 1);
+				  }
+			  }
+			  else
+			  {
+				  if(pwm_target_right < pwm_right)
+				  {
+					  setPWMRight(pwm_right - 1);
+				  }
+			  }
 		  }
-		  if(pwm_target_right > pwm_right)
-		  {
-		  	  setPWMRight(pwm_right + 1);
-		  }
-		  else if(pwm_target_right < pwm_right)
-		  {
-		  	  setPWMRight(pwm_right - 1);
-		  }
-		  HAL_Delay(accl);
-	  }
-	  float inputVoltage = getInputVoltage();
-	  if(inputVoltage > 29.2 && OV_FAULT == 0)
-	  {
-		  OV_FAULT = 1;
-	  }
-	  if((!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8) || !HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9)) && GD_FAULT == 0)
-	  {
-		  GD_FAULT = 1;
-	  }
+  	  }
+  	  float inputVoltage = getInputVoltage();
+  	  if(inputVoltage > OVERVOLTAGE && OV_FAULT == 0)
+  	  {
+  		  OV_FAULT = 1;
+  	  }
+  	  if((!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8) || !HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9)))
+  	  {
+  		  GD_FAULT = 1;
+  	  }
+  	  else{
+  		  GD_FAULT = 0;
+  	  }
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -464,7 +553,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL4;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL8;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -473,8 +562,8 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV4;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
@@ -492,7 +581,7 @@ void SystemClock_Config(void)
   PeriphClkInit.Tim15ClockSelection = RCC_TIM15CLK_HCLK;
   PeriphClkInit.Tim16ClockSelection = RCC_TIM16CLK_HCLK;
   PeriphClkInit.Tim17ClockSelection = RCC_TIM17CLK_HCLK;
-  PeriphClkInit.Adc1ClockSelection = RCC_ADC1PLLCLK_DIV1;
+  PeriphClkInit.Adc1ClockSelection = RCC_ADC1PLLCLK_DIV2;
 
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -542,7 +631,7 @@ static void MX_ADC1_Init(void)
   sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.SamplingTime = ADC_SAMPLETIME_19CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -835,7 +924,7 @@ static void MX_TIM15_Init(void)
   htim15.Instance = TIM15;
   htim15.Init.Prescaler = 0;
   htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim15.Init.Period = 3200;
+  htim15.Init.Period = 400;
   htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim15.Init.RepetitionCounter = 0;
   htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -850,7 +939,7 @@ static void MX_TIM15_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 1200;
+  sConfigOC.Pulse = 200;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
