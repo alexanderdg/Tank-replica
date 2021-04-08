@@ -58,7 +58,7 @@
 /* External variables --------------------------------------------------------*/
 extern CAN_HandleTypeDef hcan;
 /* USER CODE BEGIN EV */
-
+uint32_t temp = 0;
 /* USER CODE END EV */
 
 /******************************************************************************/

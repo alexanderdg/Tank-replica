@@ -74,12 +74,12 @@ static void MX_ADC1_Init(void);
 static void MX_CAN_Init(void);
 static void MX_DAC_Init(void);
 static void MX_TIM1_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_TIM15_Init(void);
 static void MX_TIM16_Init(void);
 static void MX_TIM17_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 #define OVERVOLTAGE 29.2
 #define ID 1
@@ -97,6 +97,10 @@ uint8_t OV_FAULT = 0;
 long timertick = 0;
 long old_timertick_accl = 0;
 long old_timertick_decl = 0;
+long temp_timertick = 0;
+uint8_t speed_left = 0;
+uint8_t speed_right = 0;
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -363,6 +367,30 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  }
   		  break;
   	  case 103:
+  		  //----------- Left speed -----------//
+  		  data[1] = speed_left;
+  		  TxMessage.StdId = 0;
+  		  TxMessage.IDE = CAN_ID_STD;
+  		  TxMessage.RTR = CAN_RTR_DATA;
+  		  TxMessage.DLC = 2;
+  		  TxMessage.TransmitGlobalTime = DISABLE;
+  		  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
+  		  	Error_Handler();
+  		  }
+  		  break;
+  	  case 104:
+  		  //----------- Right speed -----------//
+  		  data[1] = speed_right;
+  		  TxMessage.StdId = 0;
+  		  TxMessage.IDE = CAN_ID_STD;
+  		  TxMessage.RTR = CAN_RTR_DATA;
+  		  TxMessage.DLC = 2;
+  		  TxMessage.TransmitGlobalTime = DISABLE;
+  		  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
+  		  	Error_Handler();
+  		  }
+  		  break;
+  	  case 105:
   		  //----------- Get Status -----------//
   		  data[1] = OV_FAULT;
   		  data[2] = GD_FAULT;
@@ -381,6 +409,9 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   /* USER CODE END CAN1_RX0_IRQn 1 */
 }
 
+void HAL_SYSTICK_Callback(void)  {
+
+}
 
 
 /* USER CODE END 0 */
@@ -419,12 +450,12 @@ int main(void)
   MX_CAN_Init();
   MX_DAC_Init();
   MX_TIM1_Init();
-  MX_TIM2_Init();
   MX_TIM15_Init();
   MX_TIM16_Init();
   MX_TIM17_Init();
   MX_I2C1_Init();
   MX_USART1_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
   //HAL_TIM_Base_Start_IT(&htim6);
@@ -434,7 +465,13 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcBuffer, 3);
   HAL_NVIC_SetPriority(CAN_RX0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(CAN_RX0_IRQn);
+  //SysTick_Config(SystemCoreClock / 800000);
+  //HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/800000000);
+  //HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+  //HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
   DAC1->DHR12R1 = 4000;
+  HAL_TIM_Base_Start_IT(&htim1);
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -529,7 +566,14 @@ int main(void)
   	  else{
   		  GD_FAULT = 0;
   	  }
-
+  	  if((timertick - temp_timertick) >= 100)
+  	  {
+  		  speed_left = TIM1 -> CNT;
+  		  speed_right = TIM2 -> CNT;
+  		  TIM1 -> CNT = 0;
+  		  TIM2 -> CNT = 0;
+  		  temp_timertick = timertick;
+  	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -816,7 +860,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM1_Init 1 */
@@ -833,11 +877,12 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
-  sClockSourceConfig.ClockPolarity = TIM_CLOCKPOLARITY_NONINVERTED;
-  sClockSourceConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
-  sClockSourceConfig.ClockFilter = 0;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_EXTERNAL1;
+  sSlaveConfig.InputTrigger = TIM_TS_ETRF;
+  sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_NONINVERTED;
+  sSlaveConfig.TriggerPrescaler = TIM_TRIGGERPRESCALER_DIV1;
+  sSlaveConfig.TriggerFilter = 0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim1, &sSlaveConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -866,7 +911,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM2_Init 1 */
@@ -882,11 +927,12 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
-  sClockSourceConfig.ClockPolarity = TIM_CLOCKPOLARITY_NONINVERTED;
-  sClockSourceConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
-  sClockSourceConfig.ClockFilter = 0;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_EXTERNAL1;
+  sSlaveConfig.InputTrigger = TIM_TS_ETRF;
+  sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_NONINVERTED;
+  sSlaveConfig.TriggerPrescaler = TIM_TRIGGERPRESCALER_DIV1;
+  sSlaveConfig.TriggerFilter = 0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -939,7 +985,7 @@ static void MX_TIM15_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 200;
+  sConfigOC.Pulse = 1200;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
