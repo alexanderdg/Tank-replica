@@ -94,10 +94,12 @@ uint8_t pwm_left = 100;
 uint8_t pwm_right = 100;
 uint8_t GD_FAULT = 0;
 uint8_t OV_FAULT = 0;
+uint8_t TIMEOUT = 0;
 long timertick = 0;
 long old_timertick_accl = 0;
 long old_timertick_decl = 0;
 long temp_timertick = 0;
+long timeout_timertick = 0;
 uint8_t speed_left = 0;
 uint8_t speed_right = 0;
 
@@ -112,6 +114,10 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 	//HAL_GPIO_TogglePin (GPIOB, GPIO_PIN_13);
 }
 */
+
+void resetTimeout() {
+	timeout_timertick = HAL_GetTick();
+}
 
 float getInputVoltage()
 {
@@ -207,6 +213,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   uint8_t currentLSB, currentMSB, voltageLSB, voltageMSB;
   float current, voltage;
   uint8_t data[] = {ID,0,0,0,0,0,0,0};
+  resetTimeout();
   switch(RxData[0])
   {
   	  case 0:
@@ -394,10 +401,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  //----------- Get Status -----------//
   		  data[1] = OV_FAULT;
   		  data[2] = GD_FAULT;
+  		  data[3] = TIMEOUT;
   		  TxMessage.StdId = 0;
   		  TxMessage.IDE = CAN_ID_STD;
   		  TxMessage.RTR = CAN_RTR_DATA;
-  		  TxMessage.DLC = 5;
+  		  TxMessage.DLC = 4;
   		  TxMessage.TransmitGlobalTime = DISABLE;
   		  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
   		    Error_Handler();
@@ -466,9 +474,9 @@ int main(void)
   HAL_NVIC_SetPriority(CAN_RX0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(CAN_RX0_IRQn);
   //SysTick_Config(SystemCoreClock / 800000);
-  //HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/800000000);
-  //HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-  //HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/800000000);
+  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
   DAC1->DHR12R1 = 4000;
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_Base_Start_IT(&htim2);
@@ -486,6 +494,21 @@ int main(void)
 	  	  setPWMRight(100);
 	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+	   	  HAL_Delay(100);
+	  }
+	  else if(TIMEOUT == 1)
+	  {
+		  //Set sleep pins low
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+		  //Set Phase pins low
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
+		  pwm_left = 100;
+		  pwm_target_left = 100;
+		  pwm_right = 100;
+		  pwm_target_right = 100;
+		  HAL_Delay(100);
 	  }
 	  else if(pwm_target_left != pwm_left || pwm_target_right != pwm_right)
 	  {
@@ -565,6 +588,13 @@ int main(void)
   	  }
   	  else{
   		  GD_FAULT = 0;
+  	  }
+  	  if((timertick - timeout_timertick) >= 5000)
+  	  {
+  		  TIMEOUT = 1;
+  	  }
+  	  else {
+  		  TIMEOUT = 0;
   	  }
   	  if((timertick - temp_timertick) >= 100)
   	  {
