@@ -88,10 +88,10 @@ uint16_t adcBuffer[3];
 uint16_t counter = 0;
 uint8_t accl = 20;
 uint8_t decl = 5;
-uint8_t pwm_target_left = 100;
-uint8_t pwm_target_right = 100;
-uint8_t pwm_left = 100;
-uint8_t pwm_right = 100;
+uint32_t pwm_target_left = 400;
+uint32_t pwm_target_right = 400;
+uint32_t pwm_left = 400;
+uint32_t pwm_right = 400;
 uint8_t GD_FAULT = 0;
 uint8_t OV_FAULT = 0;
 uint8_t TIMEOUT = 0;
@@ -159,22 +159,26 @@ void sendNACK()
 void setPWMLeft(int PWM)
 {
 	pwm_left = PWM;
-	uint8_t PWM_local = 0;
+	uint32_t PWM_local = 0;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-	if(PWM >= 100)
+	if(PWM >= 400)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
-		PWM_local = PWM - 100;
+		PWM_local = PWM - 400;
 	}
-	else if(PWM < 100)
+	else if(PWM < 400)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
-		PWM_local = 100 - PWM;
+		PWM_local = 400 - PWM;
 	}
-	int temp = PWM_local * 4 + 1;
+	int temp = PWM_local + 1;
 	if(temp > 401)
 	{
 		temp = 401;
+	}
+	if(temp < 20)
+	{
+			temp = 0;
 	}
 	__HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, temp);
 }
@@ -182,22 +186,26 @@ void setPWMLeft(int PWM)
 void setPWMRight(int PWM)
 {
 	pwm_right = PWM;
-	uint8_t PWM_local = 0;
+	uint32_t PWM_local = 0;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	if(PWM >= 100)
+	if(PWM >= 400)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
-		PWM_local = PWM - 100;
+		PWM_local = PWM - 400;
 	}
-	else if(PWM < 100)
+	else if(PWM < 400)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);
-		PWM_local = 100 - PWM;
+		PWM_local = 400 - PWM;
 	}
-	int temp = PWM_local * 4 + 1;
+	int temp = PWM_local + 1;
 	if(temp > 401)
 	{
 		temp = 401;
+	}
+	if(temp < 20)
+	{
+		temp = 0;
 	}
 	__HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_2, temp);
 }
@@ -210,6 +218,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxMessage, RxData);
   uint32_t mb;
   uint32_t shuntVoltage;
+  uint32_t temp_speed, temp_speed_left, temp_speed_right;
   uint8_t currentLSB, currentMSB, voltageLSB, voltageMSB;
   float current, voltage;
   uint8_t data[] = {ID,0,0,0,0,0,0,0};
@@ -224,10 +233,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  //Set Phase pins low
   		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
   		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
-  		  pwm_left = 100;
-  		  pwm_target_left = 100;
-  		  pwm_right = 100;
-  		  pwm_target_right = 100;
+  		  pwm_left = 400;
+  		  pwm_target_left = 400;
+  		  pwm_right = 400;
+  		  pwm_target_right = 400;
   		  sendACK();
   		  break;
   	  case 1:
@@ -238,65 +247,70 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  //Set Phase pins low
   		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
   		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
-  		  pwm_target_right = 100;
-		  pwm_target_left = 100;
-  		  setPWMLeft(100);
-  		  setPWMRight(100);
+  		  pwm_target_right = 400;
+		  pwm_target_left = 400;
+  		  setPWMLeft(400);
+  		  setPWMRight(400);
   		  sendACK();
   		  break;
   	  case 2:
   		  //----------- Regenerative brake -----------//
-  		  pwm_target_right = 100;
-		  pwm_target_left = 100;
+  		  pwm_target_right = 400;
+		  pwm_target_left = 400;
   		  sendACK();
   		  break;
   	  case 3:
   		  //----------- Forward drive -----------//
-  		  if(RxData[1] > 100)
+  		  if(RxData[1] > 800)
   		  {
-  			  pwm_target_left = 200;
+  			  pwm_target_left = 800;
   			  pwm_target_right = 0;
   		  }
   		  else
   		  {
-  			  pwm_target_left = 100 + RxData[1];
-  			  pwm_target_right = 100 - RxData[1];
+  			  pwm_target_left = 400 + RxData[1];
+  			  pwm_target_right = 400 - RxData[1];
   		  }
   		  sendACK();
   		  break;
   	  case 4:
   		  //----------- Reverse drive -----------//
-  		  if(RxData[1] > 100)
+  		  if(RxData[1] > 400)
   		  {
   		  	  pwm_target_left = 0;
-  		  	  pwm_target_right = 200;
+  		  	  pwm_target_right = 800;
   		  }
   		  else
   		  {
-  			  pwm_target_left = 100 - RxData[1];
-  		  	  pwm_target_right = 100 + RxData[1];
+  			  pwm_target_left = 400 - RxData[1];
+  		  	  pwm_target_right = 400 + RxData[1];
   		  }
   		  sendACK();
   		  break;
   	  case 5:
   		  //----------- Manual left motor -----------//
-  		  if(RxData[1] > 200) pwm_target_left = 200;
-  		  else pwm_target_left = RxData[1];
+  		  temp_speed = (RxData[1] << 8) + RxData[2];
+  		  if(temp_speed > 800) pwm_target_left = 800;
+  		  else pwm_target_left = temp_speed;
   		  sendACK();
   		  break;
   	  case 6:
   		  //----------- Manual right motor -----------//
-  		  if(RxData[1] > 200) pwm_target_right = 200;
-  		  else pwm_target_right = RxData[1];
+  		  temp_speed = (RxData[1] << 8) + RxData[2];
+  		  if(temp_speed > 800) pwm_target_right = 800;
+  		  else pwm_target_right = temp_speed;
   		  sendACK();
   		  break;
   	  case 7:
-  		  //----------- Manual right motor -----------//
-  		  if(RxData[1] > 200) pwm_target_left = 200;
-  		  else pwm_target_left = RxData[1];
-  		  if(RxData[2] > 200) pwm_target_right = 200;
-  		  else pwm_target_right = RxData[2];
+  		  //----------- Manual right/left motor -----------//
+  		  temp_speed_left = (RxData[1] << 8) + RxData[2];
+  		  temp_speed_right = (RxData[3] << 8) + RxData[4];
+  		  if(temp_speed_left > 800) pwm_target_left = 800;
+  		  else pwm_target_left = temp_speed_left;
+  		  if(temp_speed_right > 800) pwm_target_right = 800;
+  		  else pwm_target_right = temp_speed_right;
   		  sendACK();
+
   		  break;
   	  case 10:
   		  //----------- Set acceleration -----------//
@@ -490,8 +504,8 @@ int main(void)
 	  timertick = HAL_GetTick();
 	  if(OV_FAULT == 1)
 	  {
-	  	  setPWMLeft(100);
-	  	  setPWMRight(100);
+	  	  setPWMLeft(400);
+	  	  setPWMRight(400);
 	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
 	   	  HAL_Delay(100);
@@ -504,10 +518,10 @@ int main(void)
 		  //Set Phase pins low
 		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
 		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
-		  pwm_left = 100;
-		  pwm_target_left = 100;
-		  pwm_right = 100;
-		  pwm_target_right = 100;
+		  pwm_left = 400;
+		  pwm_target_left = 400;
+		  pwm_right = 400;
+		  pwm_target_right = 400;
 		  HAL_Delay(100);
 	  }
 	  else if(pwm_target_left != pwm_left || pwm_target_right != pwm_right)
@@ -515,64 +529,72 @@ int main(void)
 		  if((timertick - old_timertick_accl) >= accl)
 		  {
 			  old_timertick_accl = timertick;
-			  if(pwm_left < 100)
+			  if(pwm_left < 400)
 			  {
 				  if(pwm_target_left < pwm_left)
 				  {
-					  setPWMLeft(pwm_left - 1);
+					  if((pwm_left - pwm_target_left) > 10) setPWMLeft(pwm_left - 10);
+					  else setPWMLeft(pwm_left - 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_left > pwm_left)
 				  {
-					  setPWMLeft(pwm_left + 1);
+					  if((pwm_target_left - pwm_left) > 10) setPWMLeft(pwm_left + 10);
+					  else setPWMLeft(pwm_left + 1);
 				  }
 			  }
-			  if(pwm_right < 100)
+			  if(pwm_right < 400)
 			  {
 				  if(pwm_target_right < pwm_right)
 				  {
-					  setPWMRight(pwm_right - 1);
+					  if((pwm_right - pwm_target_right) > 10) setPWMRight(pwm_right - 10);
+					  else setPWMRight(pwm_right - 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_right > pwm_right)
 				  {
-					  setPWMRight(pwm_right + 1);
+					  if((pwm_target_right - pwm_right) > 10) setPWMRight(pwm_right + 10);
+					  else setPWMRight(pwm_right + 1);
 				  }
 			  }
 		  }
 		  if((timertick - old_timertick_decl) >= decl)
 		  {
 			  old_timertick_decl = timertick;
-			  if(pwm_left < 100)
+			  if(pwm_left < 400)
 			  {
 				  if(pwm_target_left > pwm_left)
 				  {
-					  setPWMLeft(pwm_left + 1);
+					  if((pwm_target_left - pwm_left) > 10) setPWMLeft(pwm_left + 10);
+					  else setPWMLeft(pwm_left + 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_left < pwm_left)
 				  {
-				  	  setPWMLeft(pwm_left - 1);
+				  	  if((pwm_left - pwm_target_left) > 10) setPWMLeft(pwm_left - 10);
+				  	  else setPWMLeft(pwm_left - 1);
 				  }
 			  }
-			  if(pwm_right < 100)
+			  if(pwm_right < 400)
 			  {
 				  if(pwm_target_right > pwm_right)
 				  {
-				  	  setPWMRight(pwm_right + 1);
+				  	  if((pwm_target_right - pwm_right) > 10) setPWMRight(pwm_right + 10);
+				  	  else setPWMRight(pwm_right + 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_right < pwm_right)
 				  {
-					  setPWMRight(pwm_right - 1);
+					  if((pwm_right - pwm_target_right) > 10) setPWMRight(pwm_right - 10);
+					  else setPWMRight(pwm_right - 1);
 				  }
 			  }
 		  }
