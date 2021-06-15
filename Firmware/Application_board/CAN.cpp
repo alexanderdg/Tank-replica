@@ -107,9 +107,9 @@ float Can::getCurrentLeftMotor(void) {
   float returnvalue = -1.0;
   CAN_message_t msg;
   msg.id = MotorControllerID;
-  msg.buf[0] = 100;
+  msg.buf[0] = 101;
   msg.len = 1;
-  if(requestFrame(msg)) {
+  if (requestFrame(msg)) {
     returnvalue = canMessage.buf[1] + (canMessage.buf[2] / 100.0);
   }
   return returnvalue;
@@ -119,9 +119,9 @@ float Can::getCurrentRightMotor(void) {
   float returnvalue = -1.0;
   CAN_message_t msg;
   msg.id = MotorControllerID;
-  msg.buf[0] = 101;
+  msg.buf[0] = 100;
   msg.len = 1;
-  if(requestFrame(msg)) {
+  if (requestFrame(msg)) {
     returnvalue = canMessage.buf[1] + (canMessage.buf[2] / 100.0);
   }
   return returnvalue;
@@ -133,7 +133,7 @@ float Can::getInputVoltage(void) {
   msg.id = MotorControllerID;
   msg.buf[0] = 102;
   msg.len = 1;
-  if(requestFrame(msg)) {
+  if (requestFrame(msg)) {
     returnvalue = canMessage.buf[1] + (canMessage.buf[2] / 100.0);
   }
   return returnvalue;
@@ -145,7 +145,7 @@ int Can::getSpeedLeftMotor(void) {
   msg.id = MotorControllerID;
   msg.buf[0] = 103;
   msg.len = 1;
-  if(requestFrame(msg)) {
+  if (requestFrame(msg)) {
     returnvalue = canMessage.buf[1];
   }
   return returnvalue;
@@ -157,7 +157,7 @@ int Can::getSpeedRightMotor(void) {
   msg.id = MotorControllerID;
   msg.buf[0] = 104;
   msg.len = 1;
-  if(requestFrame(msg)) {
+  if (requestFrame(msg)) {
     returnvalue = canMessage.buf[1];
   }
   return returnvalue;
@@ -169,32 +169,36 @@ void Can::checkForEvents(void) {
 
 void Can::canReceiveEvent(const CAN_message_t &msg) {
   CanS -> received = true;
-  //printCanFrame(msg);
   CanS -> canMessage = msg;
+}
+
+void Can::clearBuffer(void) {
+  checkForEvents();
 }
 
 bool Can::requestFrame(CAN_message_t msg) {
   bool returnvalue = false;
-  received = false;
   Canbus.write(msg);
+  received = false;
   uint32_t timeout = millis();
-  while (CanS -> received == false && ((millis() - timeout) < 2)) {
+  while (CanS -> received == false && ((millis() - timeout) < 3)) {
     checkForEvents();
   }
-  if (((millis() - timeout) < 2)) returnvalue = true;
+  if (((millis() - timeout) < 3)) returnvalue = true;
   return returnvalue;
 }
 
 bool Can::sendFrame(CAN_message_t msg) {
   bool returnvalue = false;
-  received = false;
   Canbus.write(msg);
+  received = false;
   uint32_t timeout = millis();
-  while (CanS -> received == false && ((millis() - timeout) < 2)) {
+  while (CanS -> received == false && ((millis() - timeout) < 3)) {
     checkForEvents();
   }
-  if (((millis() - timeout) < 2) && canMessage.buf[1] == 1) returnvalue = true;
+  if (((millis() - timeout) < 3) && canMessage.buf[1] == 1) returnvalue = true;
   return returnvalue;
+  
 }
 
 void Can::printCanFrame(const CAN_message_t msg) {

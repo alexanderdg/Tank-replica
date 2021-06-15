@@ -323,6 +323,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  if(RxData[1] > 100) decl = 100;
   		  else decl = RxData[1];
   		  sendACK();
+  		  break;
   	  case 12:
   		  //----------- Set max torque -----------//
   		  if(RxData[1] > 100) DAC1->DHR12R1 = 4024;
@@ -504,7 +505,7 @@ int main(void)
 	  timertick = HAL_GetTick();
 	  if(OV_FAULT == 1)
 	  {
-	  	  setPWMLeft(400);
+		  setPWMLeft(400);
 	  	  setPWMRight(400);
 	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 	   	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);

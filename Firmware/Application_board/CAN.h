@@ -33,7 +33,7 @@ class Can
   private:
     bool sendFrame(CAN_message_t msg);
     bool requestFrame(CAN_message_t msg);
-    
+    void clearBuffer(void);
     CAN_message_t canMessage;
     static Can* CanS;
     bool received = false;

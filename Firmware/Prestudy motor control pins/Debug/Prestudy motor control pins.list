@@ -37,11 +37,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  16 .debug_macro  0001ce15  00000000  00000000  00039a90  2**0
                   CONTENTS, READONLY, DEBUGGING
- 17 .debug_line   00010cac  00000000  00000000  000568a5  2**0
+ 17 .debug_line   00010cad  00000000  00000000  000568a5  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    000ad8a5  00000000  00000000  00067551  2**0
+ 18 .debug_str    000ad8a5  00000000  00000000  00067552  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  00114df6  2**0
+ 19 .comment      0000007b  00000000  00000000  00114df7  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00005974  00000000  00000000  00114e74  2**2
                   CONTENTS, READONLY, DEBUGGING
@@ -1221,8 +1221,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  8000d74:	0800145b 	.word	0x0800145b
  8000d78:	080010bf 	.word	0x080010bf
  8000d7c:	080010dd 	.word	0x080010dd
- 8000d80:	080010f9 	.word	0x080010f9
- 8000d84:	08001125 	.word	0x08001125
+ 8000d80:	080010fb 	.word	0x080010fb
+ 8000d84:	08001127 	.word	0x08001127
  8000d88:	0800145b 	.word	0x0800145b
  8000d8c:	0800145b 	.word	0x0800145b
  8000d90:	0800145b 	.word	0x0800145b
@@ -1309,9 +1309,9 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  8000ed4:	0800145b 	.word	0x0800145b
  8000ed8:	0800145b 	.word	0x0800145b
  8000edc:	0800145b 	.word	0x0800145b
- 8000ee0:	08001137 	.word	0x08001137
- 8000ee4:	080011f5 	.word	0x080011f5
- 8000ee8:	080012b3 	.word	0x080012b3
+ 8000ee0:	08001139 	.word	0x08001139
+ 8000ee4:	080011f7 	.word	0x080011f7
+ 8000ee8:	080012b5 	.word	0x080012b5
  8000eec:	08001379 	.word	0x08001379
  8000ef0:	080013b9 	.word	0x080013b9
  8000ef4:	080013f9 	.word	0x080013f9
@@ -1609,280 +1609,281 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  80010f2:	701a      	strb	r2, [r3, #0]
   		  sendACK();
  80010f4:	f7ff fd56 	bl	8000ba4 <sendACK>
+  		  break;
+ 80010f8:	e1af      	b.n	800145a <HAL_CAN_RxFifo0MsgPendingCallback+0x742>
   	  case 12:
   		  //----------- Set max torque -----------//
   		  if(RxData[1] > 100) DAC1->DHR12R1 = 4024;
- 80010f8:	4b93      	ldr	r3, [pc, #588]	; (8001348 <HAL_CAN_RxFifo0MsgPendingCallback+0x630>)
- 80010fa:	785b      	ldrb	r3, [r3, #1]
- 80010fc:	2b64      	cmp	r3, #100	; 0x64
- 80010fe:	d904      	bls.n	800110a <HAL_CAN_RxFifo0MsgPendingCallback+0x3f2>
- 8001100:	4b96      	ldr	r3, [pc, #600]	; (800135c <HAL_CAN_RxFifo0MsgPendingCallback+0x644>)
- 8001102:	f640 72b8 	movw	r2, #4024	; 0xfb8
- 8001106:	609a      	str	r2, [r3, #8]
- 8001108:	e009      	b.n	800111e <HAL_CAN_RxFifo0MsgPendingCallback+0x406>
+ 80010fa:	4b93      	ldr	r3, [pc, #588]	; (8001348 <HAL_CAN_RxFifo0MsgPendingCallback+0x630>)
+ 80010fc:	785b      	ldrb	r3, [r3, #1]
+ 80010fe:	2b64      	cmp	r3, #100	; 0x64
+ 8001100:	d904      	bls.n	800110c <HAL_CAN_RxFifo0MsgPendingCallback+0x3f4>
+ 8001102:	4b96      	ldr	r3, [pc, #600]	; (800135c <HAL_CAN_RxFifo0MsgPendingCallback+0x644>)
+ 8001104:	f640 72b8 	movw	r2, #4024	; 0xfb8
+ 8001108:	609a      	str	r2, [r3, #8]
+ 800110a:	e009      	b.n	8001120 <HAL_CAN_RxFifo0MsgPendingCallback+0x408>
   		  else DAC1->DHR12R1 = RxData[1] * 40;
- 800110a:	4b8f      	ldr	r3, [pc, #572]	; (8001348 <HAL_CAN_RxFifo0MsgPendingCallback+0x630>)
- 800110c:	785b      	ldrb	r3, [r3, #1]
- 800110e:	461a      	mov	r2, r3
- 8001110:	4613      	mov	r3, r2
- 8001112:	009b      	lsls	r3, r3, #2
- 8001114:	4413      	add	r3, r2
- 8001116:	00db      	lsls	r3, r3, #3
- 8001118:	461a      	mov	r2, r3
- 800111a:	4b90      	ldr	r3, [pc, #576]	; (800135c <HAL_CAN_RxFifo0MsgPendingCallback+0x644>)
- 800111c:	609a      	str	r2, [r3, #8]
+ 800110c:	4b8e      	ldr	r3, [pc, #568]	; (8001348 <HAL_CAN_RxFifo0MsgPendingCallback+0x630>)
+ 800110e:	785b      	ldrb	r3, [r3, #1]
+ 8001110:	461a      	mov	r2, r3
+ 8001112:	4613      	mov	r3, r2
+ 8001114:	009b      	lsls	r3, r3, #2
+ 8001116:	4413      	add	r3, r2
+ 8001118:	00db      	lsls	r3, r3, #3
+ 800111a:	461a      	mov	r2, r3
+ 800111c:	4b8f      	ldr	r3, [pc, #572]	; (800135c <HAL_CAN_RxFifo0MsgPendingCallback+0x644>)
+ 800111e:	609a      	str	r2, [r3, #8]
   		  sendACK();
- 800111e:	f7ff fd41 	bl	8000ba4 <sendACK>
+ 8001120:	f7ff fd40 	bl	8000ba4 <sendACK>
   		  break;
- 8001122:	e19a      	b.n	800145a <HAL_CAN_RxFifo0MsgPendingCallback+0x742>
+ 8001124:	e199      	b.n	800145a <HAL_CAN_RxFifo0MsgPendingCallback+0x742>
   	  case 13:
   		  //----------- Reset faults -----------//
   		  OV_FAULT = 0;
- 8001124:	4b8e      	ldr	r3, [pc, #568]	; (8001360 <HAL_CAN_RxFifo0MsgPendingCallback+0x648>)
- 8001126:	2200      	movs	r2, #0
- 8001128:	701a      	strb	r2, [r3, #0]
+ 8001126:	4b8e      	ldr	r3, [pc, #568]	; (8001360 <HAL_CAN_RxFifo0MsgPendingCallback+0x648>)
+ 8001128:	2200      	movs	r2, #0
+ 800112a:	701a      	strb	r2, [r3, #0]
   		  GD_FAULT = 0;
- 800112a:	4b8e      	ldr	r3, [pc, #568]	; (8001364 <HAL_CAN_RxFifo0MsgPendingCallback+0x64c>)
- 800112c:	2200      	movs	r2, #0
- 800112e:	701a      	strb	r2, [r3, #0]
+ 800112c:	4b8d      	ldr	r3, [pc, #564]	; (8001364 <HAL_CAN_RxFifo0MsgPendingCallback+0x64c>)
+ 800112e:	2200      	movs	r2, #0
+ 8001130:	701a      	strb	r2, [r3, #0]
   		  sendACK();
- 8001130:	f7ff fd38 	bl	8000ba4 <sendACK>
+ 8001132:	f7ff fd37 	bl	8000ba4 <sendACK>
   		  break;
- 8001134:	e191      	b.n	800145a <HAL_CAN_RxFifo0MsgPendingCallback+0x742>
+ 8001136:	e190      	b.n	800145a <HAL_CAN_RxFifo0MsgPendingCallback+0x742>
   	  case 100:
   		  //----------- Left current -----------//
   		  mb = adcBuffer[1];
- 8001136:	4b8c      	ldr	r3, [pc, #560]	; (8001368 <HAL_CAN_RxFifo0MsgPendingCallback+0x650>)
- 8001138:	885b      	ldrh	r3, [r3, #2]
- 800113a:	617b      	str	r3, [r7, #20]
+ 8001138:	4b8b      	ldr	r3, [pc, #556]	; (8001368 <HAL_CAN_RxFifo0MsgPendingCallback+0x650>)
+ 800113a:	885b      	ldrh	r3, [r3, #2]
+ 800113c:	617b      	str	r3, [r7, #20]
   		  shuntVoltage = (801 * mb) / 20;
- 800113c:	697b      	ldr	r3, [r7, #20]
- 800113e:	f240 3221 	movw	r2, #801	; 0x321
- 8001142:	fb02 f303 	mul.w	r3, r2, r3
- 8001146:	4a89      	ldr	r2, [pc, #548]	; (800136c <HAL_CAN_RxFifo0MsgPendingCallback+0x654>)
- 8001148:	fba2 2303 	umull	r2, r3, r2, r3
- 800114c:	091b      	lsrs	r3, r3, #4
- 800114e:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 800113e:	697b      	ldr	r3, [r7, #20]
+ 8001140:	f240 3221 	movw	r2, #801	; 0x321
+ 8001144:	fb02 f303 	mul.w	r3, r2, r3
+ 8001148:	4a88      	ldr	r2, [pc, #544]	; (800136c <HAL_CAN_RxFifo0MsgPendingCallback+0x654>)
+ 800114a:	fba2 2303 	umull	r2, r3, r2, r3
+ 800114e:	091b      	lsrs	r3, r3, #4
+ 8001150:	62fb      	str	r3, [r7, #44]	; 0x2c
   		  current = (shuntVoltage / 10000.0);
- 8001150:	6af8      	ldr	r0, [r7, #44]	; 0x2c
- 8001152:	f7ff f97b 	bl	800044c <__aeabi_ui2d>
- 8001156:	a37a      	add	r3, pc, #488	; (adr r3, 8001340 <HAL_CAN_RxFifo0MsgPendingCallback+0x628>)
- 8001158:	e9d3 2300 	ldrd	r2, r3, [r3]
- 800115c:	f7ff fb1a 	bl	8000794 <__aeabi_ddiv>
- 8001160:	4603      	mov	r3, r0
- 8001162:	460c      	mov	r4, r1
- 8001164:	4618      	mov	r0, r3
- 8001166:	4621      	mov	r1, r4
- 8001168:	f7ff fc84 	bl	8000a74 <__aeabi_d2f>
- 800116c:	4603      	mov	r3, r0
- 800116e:	62bb      	str	r3, [r7, #40]	; 0x28
+ 8001152:	6af8      	ldr	r0, [r7, #44]	; 0x2c
+ 8001154:	f7ff f97a 	bl	800044c <__aeabi_ui2d>
+ 8001158:	a379      	add	r3, pc, #484	; (adr r3, 8001340 <HAL_CAN_RxFifo0MsgPendingCallback+0x628>)
+ 800115a:	e9d3 2300 	ldrd	r2, r3, [r3]
+ 800115e:	f7ff fb19 	bl	8000794 <__aeabi_ddiv>
+ 8001162:	4603      	mov	r3, r0
+ 8001164:	460c      	mov	r4, r1
+ 8001166:	4618      	mov	r0, r3
+ 8001168:	4621      	mov	r1, r4
+ 800116a:	f7ff fc83 	bl	8000a74 <__aeabi_d2f>
+ 800116e:	4603      	mov	r3, r0
+ 8001170:	62bb      	str	r3, [r7, #40]	; 0x28
   		  currentMSB = current;
- 8001170:	edd7 7a0a 	vldr	s15, [r7, #40]	; 0x28
- 8001174:	eefc 7ae7 	vcvt.u32.f32	s15, s15
- 8001178:	edc7 7a00 	vstr	s15, [r7]
- 800117c:	683b      	ldr	r3, [r7, #0]
- 800117e:	f887 3027 	strb.w	r3, [r7, #39]	; 0x27
+ 8001172:	edd7 7a0a 	vldr	s15, [r7, #40]	; 0x28
+ 8001176:	eefc 7ae7 	vcvt.u32.f32	s15, s15
+ 800117a:	edc7 7a00 	vstr	s15, [r7]
+ 800117e:	683b      	ldr	r3, [r7, #0]
+ 8001180:	f887 3027 	strb.w	r3, [r7, #39]	; 0x27
   		  currentLSB = (current - currentMSB)*100;
- 8001182:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
- 8001186:	ee07 3a90 	vmov	s15, r3
- 800118a:	eef8 7ae7 	vcvt.f32.s32	s15, s15
- 800118e:	ed97 7a0a 	vldr	s14, [r7, #40]	; 0x28
- 8001192:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8001196:	ed9f 7a76 	vldr	s14, [pc, #472]	; 8001370 <HAL_CAN_RxFifo0MsgPendingCallback+0x658>
- 800119a:	ee67 7a87 	vmul.f32	s15, s15, s14
- 800119e:	eefc 7ae7 	vcvt.u32.f32	s15, s15
- 80011a2:	edc7 7a00 	vstr	s15, [r7]
- 80011a6:	683b      	ldr	r3, [r7, #0]
- 80011a8:	f887 3026 	strb.w	r3, [r7, #38]	; 0x26
+ 8001184:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
+ 8001188:	ee07 3a90 	vmov	s15, r3
+ 800118c:	eef8 7ae7 	vcvt.f32.s32	s15, s15
+ 8001190:	ed97 7a0a 	vldr	s14, [r7, #40]	; 0x28
+ 8001194:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8001198:	ed9f 7a75 	vldr	s14, [pc, #468]	; 8001370 <HAL_CAN_RxFifo0MsgPendingCallback+0x658>
+ 800119c:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 80011a0:	eefc 7ae7 	vcvt.u32.f32	s15, s15
+ 80011a4:	edc7 7a00 	vstr	s15, [r7]
+ 80011a8:	683b      	ldr	r3, [r7, #0]
+ 80011aa:	f887 3026 	strb.w	r3, [r7, #38]	; 0x26
   	  	  data[1] = currentMSB;
- 80011ac:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
- 80011b0:	737b      	strb	r3, [r7, #13]
+ 80011ae:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
+ 80011b2:	737b      	strb	r3, [r7, #13]
   	  	  data[2] = currentLSB;
- 80011b2:	f897 3026 	ldrb.w	r3, [r7, #38]	; 0x26
- 80011b6:	73bb      	strb	r3, [r7, #14]
+ 80011b4:	f897 3026 	ldrb.w	r3, [r7, #38]	; 0x26
+ 80011b8:	73bb      	strb	r3, [r7, #14]
   	  	  TxMessage.StdId = 0;
- 80011b8:	4b6e      	ldr	r3, [pc, #440]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 80011ba:	2200      	movs	r2, #0
- 80011bc:	601a      	str	r2, [r3, #0]
+ 80011ba:	4b6e      	ldr	r3, [pc, #440]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 80011bc:	2200      	movs	r2, #0
+ 80011be:	601a      	str	r2, [r3, #0]
   	  	  TxMessage.IDE = CAN_ID_STD;
- 80011be:	4b6d      	ldr	r3, [pc, #436]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 80011c0:	2200      	movs	r2, #0
- 80011c2:	609a      	str	r2, [r3, #8]
+ 80011c0:	4b6c      	ldr	r3, [pc, #432]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 80011c2:	2200      	movs	r2, #0
+ 80011c4:	609a      	str	r2, [r3, #8]
   	  	  TxMessage.RTR = CAN_RTR_DATA;
- 80011c4:	4b6b      	ldr	r3, [pc, #428]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 80011c6:	2200      	movs	r2, #0
- 80011c8:	60da      	str	r2, [r3, #12]
+ 80011c6:	4b6b      	ldr	r3, [pc, #428]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 80011c8:	2200      	movs	r2, #0
+ 80011ca:	60da      	str	r2, [r3, #12]
   	  	  TxMessage.DLC = 3;
- 80011ca:	4b6a      	ldr	r3, [pc, #424]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 80011cc:	2203      	movs	r2, #3
- 80011ce:	611a      	str	r2, [r3, #16]
+ 80011cc:	4b69      	ldr	r3, [pc, #420]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 80011ce:	2203      	movs	r2, #3
+ 80011d0:	611a      	str	r2, [r3, #16]
   	  	  TxMessage.TransmitGlobalTime = DISABLE;
- 80011d0:	4b68      	ldr	r3, [pc, #416]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 80011d2:	2200      	movs	r2, #0
- 80011d4:	751a      	strb	r2, [r3, #20]
+ 80011d2:	4b68      	ldr	r3, [pc, #416]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 80011d4:	2200      	movs	r2, #0
+ 80011d6:	751a      	strb	r2, [r3, #20]
   	  	  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
- 80011d6:	f107 0314 	add.w	r3, r7, #20
- 80011da:	f107 020c 	add.w	r2, r7, #12
- 80011de:	4965      	ldr	r1, [pc, #404]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 80011e0:	6878      	ldr	r0, [r7, #4]
- 80011e2:	f002 fcc3 	bl	8003b6c <HAL_CAN_AddTxMessage>
- 80011e6:	4603      	mov	r3, r0
- 80011e8:	2b00      	cmp	r3, #0
- 80011ea:	f000 812b 	beq.w	8001444 <HAL_CAN_RxFifo0MsgPendingCallback+0x72c>
+ 80011d8:	f107 0314 	add.w	r3, r7, #20
+ 80011dc:	f107 020c 	add.w	r2, r7, #12
+ 80011e0:	4964      	ldr	r1, [pc, #400]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 80011e2:	6878      	ldr	r0, [r7, #4]
+ 80011e4:	f002 fcc2 	bl	8003b6c <HAL_CAN_AddTxMessage>
+ 80011e8:	4603      	mov	r3, r0
+ 80011ea:	2b00      	cmp	r3, #0
+ 80011ec:	f000 812a 	beq.w	8001444 <HAL_CAN_RxFifo0MsgPendingCallback+0x72c>
   	  		  Error_Handler();
- 80011ee:	f001 f825 	bl	800223c <Error_Handler>
+ 80011f0:	f001 f824 	bl	800223c <Error_Handler>
   	  	  }
   		  break;
- 80011f2:	e127      	b.n	8001444 <HAL_CAN_RxFifo0MsgPendingCallback+0x72c>
+ 80011f4:	e126      	b.n	8001444 <HAL_CAN_RxFifo0MsgPendingCallback+0x72c>
   	  case 101:
   		  //----------- Right current -----------//
   		  mb = adcBuffer[2];
- 80011f4:	4b5c      	ldr	r3, [pc, #368]	; (8001368 <HAL_CAN_RxFifo0MsgPendingCallback+0x650>)
- 80011f6:	889b      	ldrh	r3, [r3, #4]
- 80011f8:	617b      	str	r3, [r7, #20]
+ 80011f6:	4b5c      	ldr	r3, [pc, #368]	; (8001368 <HAL_CAN_RxFifo0MsgPendingCallback+0x650>)
+ 80011f8:	889b      	ldrh	r3, [r3, #4]
+ 80011fa:	617b      	str	r3, [r7, #20]
   		  shuntVoltage = (801 * mb) / 20;
- 80011fa:	697b      	ldr	r3, [r7, #20]
- 80011fc:	f240 3221 	movw	r2, #801	; 0x321
- 8001200:	fb02 f303 	mul.w	r3, r2, r3
- 8001204:	4a59      	ldr	r2, [pc, #356]	; (800136c <HAL_CAN_RxFifo0MsgPendingCallback+0x654>)
- 8001206:	fba2 2303 	umull	r2, r3, r2, r3
- 800120a:	091b      	lsrs	r3, r3, #4
- 800120c:	62fb      	str	r3, [r7, #44]	; 0x2c
+ 80011fc:	697b      	ldr	r3, [r7, #20]
+ 80011fe:	f240 3221 	movw	r2, #801	; 0x321
+ 8001202:	fb02 f303 	mul.w	r3, r2, r3
+ 8001206:	4a59      	ldr	r2, [pc, #356]	; (800136c <HAL_CAN_RxFifo0MsgPendingCallback+0x654>)
+ 8001208:	fba2 2303 	umull	r2, r3, r2, r3
+ 800120c:	091b      	lsrs	r3, r3, #4
+ 800120e:	62fb      	str	r3, [r7, #44]	; 0x2c
   		  current = (shuntVoltage / 10000.0);
- 800120e:	6af8      	ldr	r0, [r7, #44]	; 0x2c
- 8001210:	f7ff f91c 	bl	800044c <__aeabi_ui2d>
- 8001214:	a34a      	add	r3, pc, #296	; (adr r3, 8001340 <HAL_CAN_RxFifo0MsgPendingCallback+0x628>)
- 8001216:	e9d3 2300 	ldrd	r2, r3, [r3]
- 800121a:	f7ff fabb 	bl	8000794 <__aeabi_ddiv>
- 800121e:	4603      	mov	r3, r0
- 8001220:	460c      	mov	r4, r1
- 8001222:	4618      	mov	r0, r3
- 8001224:	4621      	mov	r1, r4
- 8001226:	f7ff fc25 	bl	8000a74 <__aeabi_d2f>
- 800122a:	4603      	mov	r3, r0
- 800122c:	62bb      	str	r3, [r7, #40]	; 0x28
+ 8001210:	6af8      	ldr	r0, [r7, #44]	; 0x2c
+ 8001212:	f7ff f91b 	bl	800044c <__aeabi_ui2d>
+ 8001216:	a34a      	add	r3, pc, #296	; (adr r3, 8001340 <HAL_CAN_RxFifo0MsgPendingCallback+0x628>)
+ 8001218:	e9d3 2300 	ldrd	r2, r3, [r3]
+ 800121c:	f7ff faba 	bl	8000794 <__aeabi_ddiv>
+ 8001220:	4603      	mov	r3, r0
+ 8001222:	460c      	mov	r4, r1
+ 8001224:	4618      	mov	r0, r3
+ 8001226:	4621      	mov	r1, r4
+ 8001228:	f7ff fc24 	bl	8000a74 <__aeabi_d2f>
+ 800122c:	4603      	mov	r3, r0
+ 800122e:	62bb      	str	r3, [r7, #40]	; 0x28
   		  currentMSB = current;
- 800122e:	edd7 7a0a 	vldr	s15, [r7, #40]	; 0x28
- 8001232:	eefc 7ae7 	vcvt.u32.f32	s15, s15
- 8001236:	edc7 7a00 	vstr	s15, [r7]
- 800123a:	683b      	ldr	r3, [r7, #0]
- 800123c:	f887 3027 	strb.w	r3, [r7, #39]	; 0x27
+ 8001230:	edd7 7a0a 	vldr	s15, [r7, #40]	; 0x28
+ 8001234:	eefc 7ae7 	vcvt.u32.f32	s15, s15
+ 8001238:	edc7 7a00 	vstr	s15, [r7]
+ 800123c:	683b      	ldr	r3, [r7, #0]
+ 800123e:	f887 3027 	strb.w	r3, [r7, #39]	; 0x27
   		  currentLSB = (current - currentMSB)*100;
- 8001240:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
- 8001244:	ee07 3a90 	vmov	s15, r3
- 8001248:	eef8 7ae7 	vcvt.f32.s32	s15, s15
- 800124c:	ed97 7a0a 	vldr	s14, [r7, #40]	; 0x28
- 8001250:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8001254:	ed9f 7a46 	vldr	s14, [pc, #280]	; 8001370 <HAL_CAN_RxFifo0MsgPendingCallback+0x658>
- 8001258:	ee67 7a87 	vmul.f32	s15, s15, s14
- 800125c:	eefc 7ae7 	vcvt.u32.f32	s15, s15
- 8001260:	edc7 7a00 	vstr	s15, [r7]
- 8001264:	683b      	ldr	r3, [r7, #0]
- 8001266:	f887 3026 	strb.w	r3, [r7, #38]	; 0x26
+ 8001242:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
+ 8001246:	ee07 3a90 	vmov	s15, r3
+ 800124a:	eef8 7ae7 	vcvt.f32.s32	s15, s15
+ 800124e:	ed97 7a0a 	vldr	s14, [r7, #40]	; 0x28
+ 8001252:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8001256:	ed9f 7a46 	vldr	s14, [pc, #280]	; 8001370 <HAL_CAN_RxFifo0MsgPendingCallback+0x658>
+ 800125a:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 800125e:	eefc 7ae7 	vcvt.u32.f32	s15, s15
+ 8001262:	edc7 7a00 	vstr	s15, [r7]
+ 8001266:	683b      	ldr	r3, [r7, #0]
+ 8001268:	f887 3026 	strb.w	r3, [r7, #38]	; 0x26
   		  data[1] = currentMSB;
- 800126a:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
- 800126e:	737b      	strb	r3, [r7, #13]
+ 800126c:	f897 3027 	ldrb.w	r3, [r7, #39]	; 0x27
+ 8001270:	737b      	strb	r3, [r7, #13]
   		  data[2] = currentLSB;
- 8001270:	f897 3026 	ldrb.w	r3, [r7, #38]	; 0x26
- 8001274:	73bb      	strb	r3, [r7, #14]
+ 8001272:	f897 3026 	ldrb.w	r3, [r7, #38]	; 0x26
+ 8001276:	73bb      	strb	r3, [r7, #14]
   	  	  TxMessage.StdId = 0;
- 8001276:	4b3f      	ldr	r3, [pc, #252]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 8001278:	2200      	movs	r2, #0
- 800127a:	601a      	str	r2, [r3, #0]
+ 8001278:	4b3e      	ldr	r3, [pc, #248]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 800127a:	2200      	movs	r2, #0
+ 800127c:	601a      	str	r2, [r3, #0]
   	  	  TxMessage.IDE = CAN_ID_STD;
- 800127c:	4b3d      	ldr	r3, [pc, #244]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 800127e:	2200      	movs	r2, #0
- 8001280:	609a      	str	r2, [r3, #8]
+ 800127e:	4b3d      	ldr	r3, [pc, #244]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 8001280:	2200      	movs	r2, #0
+ 8001282:	609a      	str	r2, [r3, #8]
   	  	  TxMessage.RTR = CAN_RTR_DATA;
- 8001282:	4b3c      	ldr	r3, [pc, #240]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 8001284:	2200      	movs	r2, #0
- 8001286:	60da      	str	r2, [r3, #12]
+ 8001284:	4b3b      	ldr	r3, [pc, #236]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 8001286:	2200      	movs	r2, #0
+ 8001288:	60da      	str	r2, [r3, #12]
   	  	  TxMessage.DLC = 3;
- 8001288:	4b3a      	ldr	r3, [pc, #232]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 800128a:	2203      	movs	r2, #3
- 800128c:	611a      	str	r2, [r3, #16]
+ 800128a:	4b3a      	ldr	r3, [pc, #232]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 800128c:	2203      	movs	r2, #3
+ 800128e:	611a      	str	r2, [r3, #16]
   	  	  TxMessage.TransmitGlobalTime = DISABLE;
- 800128e:	4b39      	ldr	r3, [pc, #228]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 8001290:	2200      	movs	r2, #0
- 8001292:	751a      	strb	r2, [r3, #20]
+ 8001290:	4b38      	ldr	r3, [pc, #224]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 8001292:	2200      	movs	r2, #0
+ 8001294:	751a      	strb	r2, [r3, #20]
   	  	  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
- 8001294:	f107 0314 	add.w	r3, r7, #20
- 8001298:	f107 020c 	add.w	r2, r7, #12
- 800129c:	4935      	ldr	r1, [pc, #212]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 800129e:	6878      	ldr	r0, [r7, #4]
- 80012a0:	f002 fc64 	bl	8003b6c <HAL_CAN_AddTxMessage>
- 80012a4:	4603      	mov	r3, r0
- 80012a6:	2b00      	cmp	r3, #0
- 80012a8:	f000 80ce 	beq.w	8001448 <HAL_CAN_RxFifo0MsgPendingCallback+0x730>
+ 8001296:	f107 0314 	add.w	r3, r7, #20
+ 800129a:	f107 020c 	add.w	r2, r7, #12
+ 800129e:	4935      	ldr	r1, [pc, #212]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 80012a0:	6878      	ldr	r0, [r7, #4]
+ 80012a2:	f002 fc63 	bl	8003b6c <HAL_CAN_AddTxMessage>
+ 80012a6:	4603      	mov	r3, r0
+ 80012a8:	2b00      	cmp	r3, #0
+ 80012aa:	f000 80cd 	beq.w	8001448 <HAL_CAN_RxFifo0MsgPendingCallback+0x730>
   	  		  Error_Handler();
- 80012ac:	f000 ffc6 	bl	800223c <Error_Handler>
+ 80012ae:	f000 ffc5 	bl	800223c <Error_Handler>
   	  	  }
   		  break;
- 80012b0:	e0ca      	b.n	8001448 <HAL_CAN_RxFifo0MsgPendingCallback+0x730>
+ 80012b2:	e0c9      	b.n	8001448 <HAL_CAN_RxFifo0MsgPendingCallback+0x730>
   	  case 102:
   		  //----------- Battery voltage -----------//
   		  voltage = getInputVoltage();
- 80012b2:	f7ff fc3d 	bl	8000b30 <getInputVoltage>
- 80012b6:	ed87 0a0d 	vstr	s0, [r7, #52]	; 0x34
+ 80012b4:	f7ff fc3c 	bl	8000b30 <getInputVoltage>
+ 80012b8:	ed87 0a0d 	vstr	s0, [r7, #52]	; 0x34
   		  voltageMSB = voltage;
- 80012ba:	edd7 7a0d 	vldr	s15, [r7, #52]	; 0x34
- 80012be:	eefc 7ae7 	vcvt.u32.f32	s15, s15
- 80012c2:	edc7 7a00 	vstr	s15, [r7]
- 80012c6:	683b      	ldr	r3, [r7, #0]
- 80012c8:	f887 3033 	strb.w	r3, [r7, #51]	; 0x33
+ 80012bc:	edd7 7a0d 	vldr	s15, [r7, #52]	; 0x34
+ 80012c0:	eefc 7ae7 	vcvt.u32.f32	s15, s15
+ 80012c4:	edc7 7a00 	vstr	s15, [r7]
+ 80012c8:	683b      	ldr	r3, [r7, #0]
+ 80012ca:	f887 3033 	strb.w	r3, [r7, #51]	; 0x33
   		  voltageLSB = (voltage - voltageMSB) * 100;
- 80012cc:	f897 3033 	ldrb.w	r3, [r7, #51]	; 0x33
- 80012d0:	ee07 3a90 	vmov	s15, r3
- 80012d4:	eef8 7ae7 	vcvt.f32.s32	s15, s15
- 80012d8:	ed97 7a0d 	vldr	s14, [r7, #52]	; 0x34
- 80012dc:	ee77 7a67 	vsub.f32	s15, s14, s15
- 80012e0:	ed9f 7a23 	vldr	s14, [pc, #140]	; 8001370 <HAL_CAN_RxFifo0MsgPendingCallback+0x658>
- 80012e4:	ee67 7a87 	vmul.f32	s15, s15, s14
- 80012e8:	eefc 7ae7 	vcvt.u32.f32	s15, s15
- 80012ec:	edc7 7a00 	vstr	s15, [r7]
- 80012f0:	683b      	ldr	r3, [r7, #0]
- 80012f2:	f887 3032 	strb.w	r3, [r7, #50]	; 0x32
+ 80012ce:	f897 3033 	ldrb.w	r3, [r7, #51]	; 0x33
+ 80012d2:	ee07 3a90 	vmov	s15, r3
+ 80012d6:	eef8 7ae7 	vcvt.f32.s32	s15, s15
+ 80012da:	ed97 7a0d 	vldr	s14, [r7, #52]	; 0x34
+ 80012de:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 80012e2:	ed9f 7a23 	vldr	s14, [pc, #140]	; 8001370 <HAL_CAN_RxFifo0MsgPendingCallback+0x658>
+ 80012e6:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 80012ea:	eefc 7ae7 	vcvt.u32.f32	s15, s15
+ 80012ee:	edc7 7a00 	vstr	s15, [r7]
+ 80012f2:	683b      	ldr	r3, [r7, #0]
+ 80012f4:	f887 3032 	strb.w	r3, [r7, #50]	; 0x32
   		  data[1] = voltageMSB;
- 80012f6:	f897 3033 	ldrb.w	r3, [r7, #51]	; 0x33
- 80012fa:	737b      	strb	r3, [r7, #13]
+ 80012f8:	f897 3033 	ldrb.w	r3, [r7, #51]	; 0x33
+ 80012fc:	737b      	strb	r3, [r7, #13]
   		  data[2] = voltageLSB;
- 80012fc:	f897 3032 	ldrb.w	r3, [r7, #50]	; 0x32
- 8001300:	73bb      	strb	r3, [r7, #14]
+ 80012fe:	f897 3032 	ldrb.w	r3, [r7, #50]	; 0x32
+ 8001302:	73bb      	strb	r3, [r7, #14]
   		  TxMessage.StdId = 0;
- 8001302:	4b1c      	ldr	r3, [pc, #112]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 8001304:	2200      	movs	r2, #0
- 8001306:	601a      	str	r2, [r3, #0]
+ 8001304:	4b1b      	ldr	r3, [pc, #108]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 8001306:	2200      	movs	r2, #0
+ 8001308:	601a      	str	r2, [r3, #0]
   		  TxMessage.IDE = CAN_ID_STD;
- 8001308:	4b1a      	ldr	r3, [pc, #104]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 800130a:	2200      	movs	r2, #0
- 800130c:	609a      	str	r2, [r3, #8]
+ 800130a:	4b1a      	ldr	r3, [pc, #104]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 800130c:	2200      	movs	r2, #0
+ 800130e:	609a      	str	r2, [r3, #8]
   		  TxMessage.RTR = CAN_RTR_DATA;
- 800130e:	4b19      	ldr	r3, [pc, #100]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 8001310:	2200      	movs	r2, #0
- 8001312:	60da      	str	r2, [r3, #12]
+ 8001310:	4b18      	ldr	r3, [pc, #96]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 8001312:	2200      	movs	r2, #0
+ 8001314:	60da      	str	r2, [r3, #12]
   		  TxMessage.DLC = 3;
- 8001314:	4b17      	ldr	r3, [pc, #92]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 8001316:	2203      	movs	r2, #3
- 8001318:	611a      	str	r2, [r3, #16]
+ 8001316:	4b17      	ldr	r3, [pc, #92]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 8001318:	2203      	movs	r2, #3
+ 800131a:	611a      	str	r2, [r3, #16]
   		  TxMessage.TransmitGlobalTime = DISABLE;
- 800131a:	4b16      	ldr	r3, [pc, #88]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 800131c:	2200      	movs	r2, #0
- 800131e:	751a      	strb	r2, [r3, #20]
+ 800131c:	4b15      	ldr	r3, [pc, #84]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 800131e:	2200      	movs	r2, #0
+ 8001320:	751a      	strb	r2, [r3, #20]
   		  if (HAL_CAN_AddTxMessage(hcan, &TxMessage, data, &mb) != HAL_OK) {
- 8001320:	f107 0314 	add.w	r3, r7, #20
- 8001324:	f107 020c 	add.w	r2, r7, #12
- 8001328:	4912      	ldr	r1, [pc, #72]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
- 800132a:	6878      	ldr	r0, [r7, #4]
- 800132c:	f002 fc1e 	bl	8003b6c <HAL_CAN_AddTxMessage>
- 8001330:	4603      	mov	r3, r0
- 8001332:	2b00      	cmp	r3, #0
- 8001334:	f000 808a 	beq.w	800144c <HAL_CAN_RxFifo0MsgPendingCallback+0x734>
+ 8001322:	f107 0314 	add.w	r3, r7, #20
+ 8001326:	f107 020c 	add.w	r2, r7, #12
+ 800132a:	4912      	ldr	r1, [pc, #72]	; (8001374 <HAL_CAN_RxFifo0MsgPendingCallback+0x65c>)
+ 800132c:	6878      	ldr	r0, [r7, #4]
+ 800132e:	f002 fc1d 	bl	8003b6c <HAL_CAN_AddTxMessage>
+ 8001332:	4603      	mov	r3, r0
+ 8001334:	2b00      	cmp	r3, #0
+ 8001336:	f000 8089 	beq.w	800144c <HAL_CAN_RxFifo0MsgPendingCallback+0x734>
   			  Error_Handler();
- 8001338:	f000 ff80 	bl	800223c <Error_Handler>
+ 800133a:	f000 ff7f 	bl	800223c <Error_Handler>
   		  }
   		  break;
- 800133c:	e086      	b.n	800144c <HAL_CAN_RxFifo0MsgPendingCallback+0x734>
- 800133e:	bf00      	nop
+ 800133e:	e085      	b.n	800144c <HAL_CAN_RxFifo0MsgPendingCallback+0x734>
  8001340:	00000000 	.word	0x00000000
  8001344:	40c38800 	.word	0x40c38800
  8001348:	2000031c 	.word	0x2000031c
@@ -2195,7 +2196,7 @@ int main(void)
  8001552:	2b01      	cmp	r3, #1
  8001554:	d115      	bne.n	8001582 <main+0xf2>
 	  {
-	  	  setPWMLeft(400);
+		  setPWMLeft(400);
  8001556:	f44f 70c8 	mov.w	r0, #400	; 0x190
  800155a:	f7ff fb4d 	bl	8000bf8 <setPWMLeft>
 	  	  setPWMRight(400);
@@ -5831,7 +5832,10 @@ __weak uint32_t HAL_GetTick(void)
 {
  80029f8:	b480      	push	{r7}
  80029fa:	af00      	add	r7, sp, #0
-  return uwTick;  
+
+
+
+	return uwTick;
  80029fc:	4b03      	ldr	r3, [pc, #12]	; (8002a0c <HAL_GetTick+0x14>)
  80029fe:	681b      	ldr	r3, [r3, #0]
 }
