@@ -86,12 +86,16 @@ static void MX_TIM2_Init(void);
 
 uint16_t adcBuffer[3];
 uint16_t counter = 0;
-uint8_t accl = 20;
-uint8_t decl = 5;
+uint8_t accl = 28;
+uint8_t decl = 20;
 uint32_t pwm_target_left = 400;
 uint32_t pwm_target_right = 400;
+uint32_t pid_pwm_target_left = 0;
+uint32_t pid_pwm_target_right = 0;
 uint32_t pwm_left = 400;
 uint32_t pwm_right = 400;
+uint32_t pid_pwm_right = 400;
+uint32_t pid_pwm_left = 400;
 uint8_t GD_FAULT = 0;
 uint8_t OV_FAULT = 0;
 uint8_t TIMEOUT = 0;
@@ -102,6 +106,15 @@ long temp_timertick = 0;
 long timeout_timertick = 0;
 uint8_t speed_left = 0;
 uint8_t speed_right = 0;
+
+float KP = 0.0;
+float KI = 0.0;
+float KD = 0.0;
+int sampleTime = 0;
+int maxPIDlevel = 400;
+int minPIDlevel = 0;
+int IntegralLeft = 0;
+int IntegralRight = 0;
 
 /* USER CODE END PFP */
 
@@ -114,6 +127,36 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 	//HAL_GPIO_TogglePin (GPIOB, GPIO_PIN_13);
 }
 */
+
+void initPID(float KPvalue, float KIvalue, float KDvalue, int sampleTimeValue)
+{
+	KP = KPvalue;
+	KI = KIvalue;
+	KD = KDvalue;
+	sampleTime = sampleTimeValue;
+}
+
+int calculatePIDLeft(int feedback, int target)
+{
+	int error = target - feedback;
+	IntegralLeft += error;
+	if(IntegralLeft > 150) IntegralLeft = 150;
+	int correctionvalue = (KP * error + KI * IntegralLeft);
+	if(correctionvalue > maxPIDlevel) correctionvalue = maxPIDlevel;
+	else if (correctionvalue < minPIDlevel) correctionvalue = minPIDlevel;
+	return correctionvalue;
+}
+
+int calculatePIDRight(int feedback, int target)
+{
+	int error = target - feedback;
+	IntegralRight += error;
+	if(IntegralRight > 150) IntegralRight = 150;
+	int correctionvalue = (KP * error + KI * IntegralRight);
+	if(correctionvalue > maxPIDlevel) correctionvalue = maxPIDlevel;
+	else if (correctionvalue < minPIDlevel) correctionvalue = minPIDlevel;
+	return correctionvalue;
+}
 
 void resetTimeout() {
 	timeout_timertick = HAL_GetTick();
@@ -155,6 +198,59 @@ void sendNACK()
 	}
 }
 
+void setPIDPWMLeft(int PWM)
+{
+	pwm_left = PWM;
+	uint32_t PWM_local = 0;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+	if(PWM >= 400)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+		PWM_local = PWM - 400;
+	}
+	else if(PWM < 400)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+		PWM_local = 400 - PWM;
+	}
+	int temp = PWM_local + 1;
+	if(temp > 401)
+	{
+		temp = 401;
+	}
+	if(temp < 20)
+	{
+		temp = 0;
+	}
+	pid_pwm_target_left = temp;
+}
+
+void setPIDPWMRight(int PWM)
+{
+	pwm_right = PWM;
+	uint32_t PWM_local;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+	if(PWM >= 400)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
+		PWM_local = PWM - 400;
+	}
+	else if(PWM < 400)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);
+		PWM_local = 400 - PWM;
+	}
+	int temp = PWM_local + 1;
+	if(temp > 401)
+	{
+		temp = 401;
+	}
+	if(temp < 20)
+	{
+		temp = 0;
+	}
+	pid_pwm_target_right = temp;
+}
 
 void setPWMLeft(int PWM)
 {
@@ -402,7 +498,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  break;
   	  case 104:
   		  //----------- Right speed -----------//
-  		  data[1] = speed_right;
+  		  data[1] = pid_pwm_target_left / 2.66;
   		  TxMessage.StdId = 0;
   		  TxMessage.IDE = CAN_ID_STD;
   		  TxMessage.RTR = CAN_RTR_DATA;
@@ -495,6 +591,9 @@ int main(void)
   DAC1->DHR12R1 = 4000;
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_Base_Start_IT(&htim2);
+  setPWMLeft(400);
+  setPWMRight(400);
+  initPID(0.3, 3.0 ,0,0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -534,32 +633,32 @@ int main(void)
 			  {
 				  if(pwm_target_left < pwm_left)
 				  {
-					  if((pwm_left - pwm_target_left) > 10) setPWMLeft(pwm_left - 10);
-					  else setPWMLeft(pwm_left - 1);
+					  if((pwm_left - pwm_target_left) > 10) setPIDPWMLeft(pwm_left - 10);
+					  else setPIDPWMLeft(pwm_left - 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_left > pwm_left)
 				  {
-					  if((pwm_target_left - pwm_left) > 10) setPWMLeft(pwm_left + 10);
-					  else setPWMLeft(pwm_left + 1);
+					  if((pwm_target_left - pwm_left) > 10) setPIDPWMLeft(pwm_left + 10);
+					  else setPIDPWMLeft(pwm_left + 1);
 				  }
 			  }
 			  if(pwm_right < 400)
 			  {
 				  if(pwm_target_right < pwm_right)
 				  {
-					  if((pwm_right - pwm_target_right) > 10) setPWMRight(pwm_right - 10);
-					  else setPWMRight(pwm_right - 1);
+					  if((pwm_right - pwm_target_right) > 10) setPIDPWMRight(pwm_right - 10);
+					  else setPIDPWMRight(pwm_right - 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_right > pwm_right)
 				  {
-					  if((pwm_target_right - pwm_right) > 10) setPWMRight(pwm_right + 10);
-					  else setPWMRight(pwm_right + 1);
+					  if((pwm_target_right - pwm_right) > 10) setPIDPWMRight(pwm_right + 10);
+					  else setPIDPWMRight(pwm_right + 1);
 				  }
 			  }
 		  }
@@ -570,32 +669,32 @@ int main(void)
 			  {
 				  if(pwm_target_left > pwm_left)
 				  {
-					  if((pwm_target_left - pwm_left) > 10) setPWMLeft(pwm_left + 10);
-					  else setPWMLeft(pwm_left + 1);
+					  if((pwm_target_left - pwm_left) > 10) setPIDPWMLeft(pwm_left + 10);
+					  else setPIDPWMLeft(pwm_left + 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_left < pwm_left)
 				  {
-				  	  if((pwm_left - pwm_target_left) > 10) setPWMLeft(pwm_left - 10);
-				  	  else setPWMLeft(pwm_left - 1);
+				  	  if((pwm_left - pwm_target_left) > 10) setPIDPWMLeft(pwm_left - 10);
+				  	  else setPIDPWMLeft(pwm_left - 1);
 				  }
 			  }
 			  if(pwm_right < 400)
 			  {
 				  if(pwm_target_right > pwm_right)
 				  {
-				  	  if((pwm_target_right - pwm_right) > 10) setPWMRight(pwm_right + 10);
-				  	  else setPWMRight(pwm_right + 1);
+				  	  if((pwm_target_right - pwm_right) > 10) setPIDPWMRight(pwm_right + 10);
+				  	  else setPIDPWMRight(pwm_right + 1);
 				  }
 			  }
 			  else
 			  {
 				  if(pwm_target_right < pwm_right)
 				  {
-					  if((pwm_right - pwm_target_right) > 10) setPWMRight(pwm_right - 10);
-					  else setPWMRight(pwm_right - 1);
+					  if((pwm_right - pwm_target_right) > 10) setPIDPWMRight(pwm_right - 10);
+					  else setPIDPWMRight(pwm_right - 1);
 				  }
 			  }
 		  }
@@ -626,6 +725,10 @@ int main(void)
   		  TIM1 -> CNT = 0;
   		  TIM2 -> CNT = 0;
   		  temp_timertick = timertick;
+  		  int pidresult = calculatePIDLeft(speed_left, pid_pwm_target_left / 2.66);
+  		  __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, pidresult);
+  		  pidresult = calculatePIDRight(speed_right, pid_pwm_target_right / 2.66);
+  		  __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_2, pidresult);
   	  }
     /* USER CODE BEGIN 3 */
   }

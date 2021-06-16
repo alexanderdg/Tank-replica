@@ -21,8 +21,8 @@ void setup() {
   can.initCan();
   xbee.initXbee();
   Serial.print("->>");
-  Serial.println(can.setAccelerationMotor(20));
-  Serial.println(can.setDeaccelerationMotor(10));
+  Serial.println(can.setAccelerationMotor(15));
+  Serial.println(can.setDeaccelerationMotor(8));
   Serial.println(can.setMaxTorque(20));
   speaker.init();
   speaker.playTank();
@@ -41,8 +41,8 @@ void loop() {
     int temp2 = motorvalues.RightMotor;
     int lMotor, rMotor;
     JoyToDiff(temp1, temp2, &lMotor, &rMotor);
-    can.setRightMotorSpeed(lMotor);
-    can.setLeftMotorSpeed(rMotor);
+    can.setRightMotorSpeed(rMotor);
+    can.setLeftMotorSpeed(lMotor);
   }
   else
   {

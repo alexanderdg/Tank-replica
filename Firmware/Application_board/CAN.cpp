@@ -177,6 +177,7 @@ void Can::clearBuffer(void) {
 }
 
 bool Can::requestFrame(CAN_message_t msg) {
+  clearBuffer();
   bool returnvalue = false;
   Canbus.write(msg);
   received = false;
@@ -189,6 +190,7 @@ bool Can::requestFrame(CAN_message_t msg) {
 }
 
 bool Can::sendFrame(CAN_message_t msg) {
+  clearBuffer();
   bool returnvalue = false;
   Canbus.write(msg);
   received = false;
