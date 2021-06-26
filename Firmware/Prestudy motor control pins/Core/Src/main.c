@@ -104,8 +104,10 @@ long old_timertick_accl = 0;
 long old_timertick_decl = 0;
 long temp_timertick = 0;
 long timeout_timertick = 0;
-uint8_t speed_left = 0;
-uint8_t speed_right = 0;
+int speed_left = 0;
+int speed_right = 0;
+int previous_speed_left = 0;
+int previous_speed_right = 0;
 
 float KP = 0.0;
 float KI = 0.0;
@@ -140,7 +142,10 @@ int calculatePIDLeft(int feedback, int target)
 {
 	int error = target - feedback;
 	IntegralLeft += error;
-	if(IntegralLeft > 150) IntegralLeft = 150;
+	if((IntegralLeft * KI) > maxPIDlevel)
+	{
+		IntegralLeft = maxPIDlevel/KI;
+	}
 	int correctionvalue = (KP * error + KI * IntegralLeft);
 	if(correctionvalue > maxPIDlevel) correctionvalue = maxPIDlevel;
 	else if (correctionvalue < minPIDlevel) correctionvalue = minPIDlevel;
@@ -151,7 +156,10 @@ int calculatePIDRight(int feedback, int target)
 {
 	int error = target - feedback;
 	IntegralRight += error;
-	if(IntegralRight > 150) IntegralRight = 150;
+	if((IntegralRight * KI) > 400)
+	{
+		IntegralRight = maxPIDlevel/KI;
+	}
 	int correctionvalue = (KP * error + KI * IntegralRight);
 	if(correctionvalue > maxPIDlevel) correctionvalue = maxPIDlevel;
 	else if (correctionvalue < minPIDlevel) correctionvalue = minPIDlevel;
@@ -498,7 +506,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  break;
   	  case 104:
   		  //----------- Right speed -----------//
-  		  data[1] = pid_pwm_target_left / 2.66;
+  		  data[1] = speed_right;
   		  TxMessage.StdId = 0;
   		  TxMessage.IDE = CAN_ID_STD;
   		  TxMessage.RTR = CAN_RTR_DATA;
@@ -593,7 +601,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   setPWMLeft(400);
   setPWMRight(400);
-  initPID(0.3, 3.0 ,0,0);
+  initPID(0.08, 0.5 ,0,0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -718,17 +726,22 @@ int main(void)
   	  else {
   		  TIMEOUT = 0;
   	  }
-  	  if((timertick - temp_timertick) >= 100)
+  	  if((timertick - temp_timertick) >= 50)
   	  {
-  		  speed_left = TIM1 -> CNT;
-  		  speed_right = TIM2 -> CNT;
+  		  previous_speed_left = speed_left;
+  		  previous_speed_right = speed_right;
+  		  speed_left = (previous_speed_left / 2) + TIM1 -> CNT;
+  		  speed_right = (previous_speed_right / 2) + TIM2 -> CNT;
   		  TIM1 -> CNT = 0;
   		  TIM2 -> CNT = 0;
   		  temp_timertick = timertick;
   		  int pidresult = calculatePIDLeft(speed_left, pid_pwm_target_left / 2.66);
-  		  __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, pidresult);
+  		  if(pidresult > 30) __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, pidresult);
+  		  else __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, 0);
   		  pidresult = calculatePIDRight(speed_right, pid_pwm_target_right / 2.66);
-  		  __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_2, pidresult);
+  		  if(pidresult > 30) __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_2, pidresult);
+  		  else __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_2, 0);
+
   	  }
     /* USER CODE BEGIN 3 */
   }
