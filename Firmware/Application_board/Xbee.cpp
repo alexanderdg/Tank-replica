@@ -12,28 +12,71 @@ bool Xbee::initXbee(void) {
   return true;
 }
 
-bool Xbee::readRemote(MotorValues * motorValues, TurretValues * turretValues) {
-  bool returnValue = false;
-  uint8_t receivedBytes = 0;
-  long savedTimestamp = millis();
-  Serial8.write('r');
-  while (receivedBytes < 2 && (millis() - savedTimestamp) < ConnectionTimeout)
-  {
-    if (Serial8.available() > 0)
-    {
-      int received = Serial8.read();
-      switch (receivedBytes)
-      {
-        case 0:
-          motorValues -> LeftMotor = map(received, 0, 255, 0, 800);
-          break;
-        case 1:
-          motorValues -> RightMotor = map(received, 0 , 255, 0, 800);
-          break;
+
+bool Xbee::readXbeeData(void) {
+  while (Serial8.available()) {
+    char inChar = (char) Serial8.read();
+    lastTimeReceivedTimestamp = millis();
+    if (inChar == ':') {
+      for (int i = 0; i < 20; i++) {
+        inputBufferStored[i] = inputBuffer[i];
       }
-      receivedBytes ++;
+      inputBufferIndexStored = inputBufferIndex;
+      inputBufferIndex = 0;
+      for (int i = 0; i < 20; i++) {
+        inputBuffer[i] = '0';
+      }
+      stringComplete = true;
+    }
+    else {
+      if (inputBufferIndex < 20)
+      {
+        inputBuffer[inputBufferIndex] = inChar;
+        inputBufferIndex ++;
+      }
+      else
+      {
+        inputBufferIndex = 0;
+        for (int i = 0; i < 20; i++) {
+          inputBuffer[i] = '0';
+        }
+      }
     }
   }
-  if((millis() - savedTimestamp) < ConnectionTimeout) returnValue = true;
-  return returnValue;
+  if (stringComplete) {
+    if (inputBufferIndexStored == 5)
+    {
+      VRxL = inputBufferStored[0];
+      VRyL = inputBufferStored[1];
+      VRxR = inputBufferStored[2];
+      VRyR = inputBufferStored[3];
+      driveMode = inputBufferStored[4];
+      stringComplete = false;
+      newData = true;
+    }
+    else {
+      stringComplete = false;
+    }
+  }
+  return true;
+}
+
+
+bool Xbee::checkForNewData(void) {
+  bool returnvalue = newData;
+  newData = false;
+  return returnvalue;
+}
+
+
+void Xbee::getJoystickData(MotorValues * motorValues, TurretValues * turretValues) {
+   motorValues -> LeftMotor = VRxL;
+   motorValues -> RightMotor = VRyL;
+   turretValues -> xValue = VRxR;
+   turretValues -> yValue = VRyR;
+}
+
+
+int Xbee::getDriveMode(void) {
+    return driveMode;
 }

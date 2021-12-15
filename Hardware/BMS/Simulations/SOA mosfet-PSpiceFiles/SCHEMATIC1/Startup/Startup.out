@@ -1,0 +1,216 @@
+
+**** 09/28/21 20:07:47 ******* PSpice 17.4.0 (Nov 2018) ******* ID# 0 ********
+
+ ** Profile: "SCHEMATIC1-Startup"  [ D:\Drive\Labo\Tank-replica\Hardware\BMS\Simulations\SOA mosfet-PSpiceFiles\SCHEMATIC1\Startup.si
+
+
+ ****     CIRCUIT DESCRIPTION
+
+
+******************************************************************************
+
+
+
+
+** Creating circuit file "Startup.cir" 
+** WARNING: THIS AUTOMATICALLY GENERATED FILE MAY BE OVERWRITTEN BY SUBSEQUENT SIMULATIONS
+
+*Libraries: 
+* Profile Libraries :
+* Local Libraries :
+* From [PSPICE NETLIST] section of C:\cds_spb_home\cdssetup\OrCAD_PSpiceTIPSpice_Install\17.4.0\PSpice.ini file:
+.lib "nom_pspti.lib" 
+.lib "nom.lib" 
+
+*Analysis directives: 
+.TRAN  0 30m 0 100n 
+.OPTIONS ADVCONV
+.OPTIONS FILEMODELSEARCH
+.PROBE64 V(alias(*)) I(alias(*)) W(alias(*)) D(alias(*)) NOISE(alias(*)) 
+.INC "..\SCHEMATIC1.net" 
+
+
+
+**** INCLUDING SCHEMATIC1.net ****
+* source SOA MOSFET
+V_V1         N14635 0 24Vdc
+V_V2         N14554 0  
++PULSE 0 10 500u 0 0 20m 
+X_M1         N14873 N14563 0 POWER_NMOS_P PARAMS: BVDSS=80.0 IDSS=10U
++  VGS_TH=2.8 RDSON=0.0024 GFS=75 CISS=5150P COSS=440P CRSS=48P RG=0.88 VSD=0.95
++  QG=69N V_QG=10 TRR=13N
+R_R1         N14554 N14563  2200k TC=0,0 
+C_C1         N14873 N14635  3000u  TC=0,0 
+R_R2         N14873 N14635  10 TC=0,0 
+X_M2         N14873 N14563 0 POWER_NMOS_P PARAMS: BVDSS=80.0 IDSS=10U
++  VGS_TH=2.8 RDSON=0.0024 GFS=75 CISS=5150P COSS=440P CRSS=48P RG=0.88 VSD=0.95
++  QG=69N V_QG=10 TRR=13N
+R_R3         0 N14563  5600k TC=0,0 
+D_D1         N17058 N14554 Dbreak 
+R_R4         N17058 N14563  4.7K TC=0,0 
+
+**** RESUMING Startup.cir ****
+.END
+
+**** 09/28/21 20:07:47 ******* PSpice 17.4.0 (Nov 2018) ******* ID# 0 ********
+
+ ** Profile: "SCHEMATIC1-Startup"  [ D:\Drive\Labo\Tank-replica\Hardware\BMS\Simulations\SOA mosfet-PSpiceFiles\SCHEMATIC1\Startup.si
+
+
+ ****     Diode MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               X_M1.N_MOSFET.DBT 
+          IS   10.000000E-06 
+           N    3.198293     
+          BV   80            
+          TT   13.000000E-09 
+         CJO  100.000000E-15 
+           M     .35         
+
+
+               X_M2.N_MOSFET.DBT 
+          IS   10.000000E-06 
+           N    3.198293     
+          BV   80            
+          TT   13.000000E-09 
+         CJO  100.000000E-15 
+           M     .35         
+
+
+**** 09/28/21 20:07:47 ******* PSpice 17.4.0 (Nov 2018) ******* ID# 0 ********
+
+ ** Profile: "SCHEMATIC1-Startup"  [ D:\Drive\Labo\Tank-replica\Hardware\BMS\Simulations\SOA mosfet-PSpiceFiles\SCHEMATIC1\Startup.si
+
+
+ ****     MOSFET MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               X_M1.N_MOSFET   X_M2.N_MOSFET   
+               NMOS            NMOS            
+       LEVEL    1               1            
+           L  100.000000E-06  100.000000E-06 
+           W  100.000000E-06  100.000000E-06 
+         VTO    3.3             3.3          
+          KP  150             150            
+       GAMMA    0               0            
+         PHI     .6              .6          
+      LAMBDA    0               0            
+          IS   10.000000E-15   10.000000E-15 
+          JS    0               0            
+          PB     .8              .8          
+        PBSW     .8              .8          
+          CJ    0               0            
+        CJSW    0               0            
+        CGSO    0               0            
+        CGDO    0               0            
+        CGBO    0               0            
+         TOX  100.000000E-09  100.000000E-09 
+          XJ    0               0            
+       UCRIT   10.000000E+03   10.000000E+03 
+      DIOMOD    1               1            
+         VFB    0               0            
+        LETA    0               0            
+        WETA    0               0            
+          U0    0               0            
+        TEMP    0               0            
+         VDD    5               5            
+       XPART    0               0            
+
+
+**** 09/28/21 20:07:47 ******* PSpice 17.4.0 (Nov 2018) ******* ID# 0 ********
+
+ ** Profile: "SCHEMATIC1-Startup"  [ D:\Drive\Labo\Tank-replica\Hardware\BMS\Simulations\SOA mosfet-PSpiceFiles\SCHEMATIC1\Startup.si
+
+
+ ****     Voltage Controlled Switch MODEL PARAMETERS
+
+
+******************************************************************************
+
+
+
+
+               X_M1.S_GATE_CHG_SW 
+         RON     .01         
+        ROFF  100.000000E+06 
+         VON    3.9          
+        VOFF    2.8          
+
+
+               X_M2.S_GATE_CHG_SW 
+         RON     .01         
+        ROFF  100.000000E+06 
+         VON    3.9          
+        VOFF    2.8          
+
+
+**** 09/28/21 20:07:47 ******* PSpice 17.4.0 (Nov 2018) ******* ID# 0 ********
+
+ ** Profile: "SCHEMATIC1-Startup"  [ D:\Drive\Labo\Tank-replica\Hardware\BMS\Simulations\SOA mosfet-PSpiceFiles\SCHEMATIC1\Startup.si
+
+
+ ****     INITIAL TRANSIENT SOLUTION       TEMPERATURE =   27.000 DEG C
+
+
+******************************************************************************
+
+
+
+ NODE   VOLTAGE     NODE   VOLTAGE     NODE   VOLTAGE     NODE   VOLTAGE
+
+
+(N14554)    0.0000 (N14563) 91.02E-21 (N14635)   24.0000 (N14873)   24.0000     
+
+(N17058) 91.02E-21 (X_M1.d)   24.0000 (X_M1.g) 91.02E-21 (X_M1.s) 28.81E-15     
+
+(X_M2.d)   24.0000 (X_M2.g) 91.02E-21 (X_M2.s) 28.81E-15 (X_M1.ga) 91.02E-21    
+
+(X_M1.gb) 91.02E-21                   (X_M2.ga) 91.02E-21                       
+
+(X_M2.gb) 91.02E-21                   (X_M1.drain_a)   24.0000                  
+
+(X_M1.drain_b)   24.0000              (X_M2.drain_a)   24.0000                  
+
+(X_M2.drain_b)   24.0000              
+
+
+
+
+    VOLTAGE SOURCE CURRENTS
+    NAME         CURRENT
+
+    V_V1        -2.000E-05
+    V_V2         4.137E-26
+
+    TOTAL POWER DISSIPATION   4.80E-04  WATTS
+
+
+
+          JOB CONCLUDED
+
+**** 09/28/21 20:07:47 ******* PSpice 17.4.0 (Nov 2018) ******* ID# 0 ********
+
+ ** Profile: "SCHEMATIC1-Startup"  [ D:\Drive\Labo\Tank-replica\Hardware\BMS\Simulations\SOA mosfet-PSpiceFiles\SCHEMATIC1\Startup.si
+
+
+ ****     JOB STATISTICS SUMMARY
+
+
+******************************************************************************
+
+
+
+  License check-out time            =      162.05
+  Total job time (using Solver 1)   =       17.20
+

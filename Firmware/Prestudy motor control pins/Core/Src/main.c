@@ -118,6 +118,9 @@ int minPIDlevel = 0;
 int IntegralLeft = 0;
 int IntegralRight = 0;
 
+int offsetLeftMotor = 0;
+int offsetRightMotor = 0;
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -146,6 +149,10 @@ int calculatePIDLeft(int feedback, int target)
 	{
 		IntegralLeft = maxPIDlevel/KI;
 	}
+	if(target == 0)
+	{
+		IntegralLeft = 0;
+	}
 	int correctionvalue = (KP * error + KI * IntegralLeft);
 	if(correctionvalue > maxPIDlevel) correctionvalue = maxPIDlevel;
 	else if (correctionvalue < minPIDlevel) correctionvalue = minPIDlevel;
@@ -159,6 +166,10 @@ int calculatePIDRight(int feedback, int target)
 	if((IntegralRight * KI) > 400)
 	{
 		IntegralRight = maxPIDlevel/KI;
+	}
+	if(target == 0)
+	{
+			IntegralRight = 0;
 	}
 	int correctionvalue = (KP * error + KI * IntegralRight);
 	if(correctionvalue > maxPIDlevel) correctionvalue = maxPIDlevel;
@@ -211,12 +222,12 @@ void setPIDPWMLeft(int PWM)
 	pwm_left = PWM;
 	uint32_t PWM_local = 0;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-	if(PWM >= 400)
+	if(PWM >= 430)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
 		PWM_local = PWM - 400;
 	}
-	else if(PWM < 400)
+	else if(PWM < 370)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
 		PWM_local = 400 - PWM;
@@ -236,14 +247,14 @@ void setPIDPWMLeft(int PWM)
 void setPIDPWMRight(int PWM)
 {
 	pwm_right = PWM;
-	uint32_t PWM_local;
+	uint32_t PWM_local = 0;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	if(PWM >= 400)
+	if(PWM >= 430)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
 		PWM_local = PWM - 400;
 	}
-	else if(PWM < 400)
+	else if(PWM < 370)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);
 		PWM_local = 400 - PWM;
@@ -442,7 +453,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  break;
   	  case 100:
   		  //----------- Left current -----------//
-  		  mb = adcBuffer[1];
+  		  if((adcBuffer[1] - offsetLeftMotor) > 0) mb = adcBuffer[1] - offsetLeftMotor;
+  		  else mb = 0;
   		  shuntVoltage = (801 * mb) / 20;
   		  current = (shuntVoltage / 10000.0);
   		  currentMSB = current;
@@ -460,7 +472,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   		  break;
   	  case 101:
   		  //----------- Right current -----------//
-  		  mb = adcBuffer[2];
+  		  if((adcBuffer[2] - offsetRightMotor) > 0) mb = adcBuffer[2] - offsetRightMotor;
+  		  else mb = 0;
   		  shuntVoltage = (801 * mb) / 20;
   		  current = (shuntVoltage / 10000.0);
   		  currentMSB = current;
@@ -602,6 +615,9 @@ int main(void)
   setPWMLeft(400);
   setPWMRight(400);
   initPID(0.08, 0.5 ,0,0);
+  HAL_Delay(100);
+  offsetLeftMotor = adcBuffer[1];
+  offsetRightMotor = adcBuffer[2];
   /* USER CODE END 2 */
 
   /* Infinite loop */

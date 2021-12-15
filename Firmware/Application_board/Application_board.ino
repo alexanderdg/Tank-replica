@@ -1,9 +1,8 @@
-
-
 #include <Arduino.h>
 #include "Can.h"
 #include "Speaker.h"
 #include "Xbee.h"
+#include <LoRaLib.h>
 
 
 int en_output = 4;
@@ -15,14 +14,33 @@ int testpin = 29;
 #define DDRIVE_MAX 255  //The maximum value x or y can be.
 #define MOTOR_MIN_PWM 0 //The minimum value the motor output can be.
 #define MOTOR_MAX_PWM 800 //The maximum value the motor output can be.
+#define LORA_RST 30
+#define LORA_CS 10
+#define LORA_DIO0 31
+#define LORA_DIO1 32
 
 Can can;
 Speaker speaker;
 Xbee xbee;
-MotorValues motorvalues;
+MotorValues motorValues;
 TurretValues turretValues;
+SX1278 lora = new LoRa(LORA_CS, LORA_DIO0, LORA_DIO1, SPI);
+
+volatile bool receiveFlag = false;
+volatile bool enableInterrupt = true;
+String tempString = "";
+String inputString = "";
+bool stringComplete = false;
+uint8_t VRxL = 127;
+uint8_t VRyL = 127;
+int lastDriveMode = 0;
+
+long savedTimestamp = 0;
 
 void setup() {
+  Serial.begin(115200);
+  pinMode(LORA_RST, OUTPUT);
+  digitalWrite(LORA_RST, HIGH);
   can.initCan();
   xbee.initXbee();
   Serial.print("->>");
@@ -37,60 +55,143 @@ void setup() {
   //pinMode(output2, OUTPUT);
   can.setRightMotorSpeed(400);
   can.setLeftMotorSpeed(400);
+  delay(500);
+  Serial.print(F("Initializing SX1278 ... "));
+  int state = lora.beginFSK(434.0, 200.0);
+  lora.setNodeAddress(0x01);
+  if (state == ERR_NONE) {
+    Serial.println(F("success!"));
+  } else {
+    Serial.print(F("failed, code "));
+    Serial.println(state);
+  }
+  lora.setDio0Action(setFlag);
+  lora.startReceive();
 }
 
 
 void loop() {
   //Serial.println("test");
-  if (xbee.readRemote(&motorvalues, &turretValues))
-  {
+  /*
+  if (stringComplete) {
+    Serial.print("Received string: ");
+    Serial.print(inputString);
+    Serial.println(':');
+    char buffer[5];
+    inputString.toCharArray(buffer, 5);
+    VRxL = buffer[0];
+    VRyL = buffer[1];
+    int driveMode = buffer[4];
+    //Serial.println(buffer[1], DEC);
+    stringComplete = false;
     int temp1 = motorvalues.LeftMotor;
     int temp2 = motorvalues.RightMotor;
     int lMotor, rMotor;
-    JoyToDiff(temp1, temp2, &lMotor, &rMotor);
-    //CalculateTankDrive(temp1, temp2, &lMotor, &rMotor);
-    //Serial.print(temp1);
-    //Serial.print("\t");
-    //Serial.println(temp2);
+    JoyToDiff(VRxL, VRyL, &lMotor, &rMotor);
+    //Serial.print(lMotor);
+    //Serial.print(":");
+    //Serial.println(rMotor);
     can.setRightMotorSpeed(rMotor);
     can.setLeftMotorSpeed(lMotor);
-  }
-
-  else
-  {
-    //Serial.println("Connection problems with the remote");
-    //Serial.println(motorvalues.LeftMotor);
-  }
-  if (millis() > 8000)
-  {
-    //can.setRightMotorSpeed(800);
-    //can.setLeftMotorSpeed(800);
-  }
-  
-    Serial.println("Voltage requested");
-    float voltage = can.getInputVoltage();
-    Serial.println(voltage);
-    if (voltage < 0.0)
-    {
-    Serial.println("Error detected !!!!!!!!!!!!!!!!!!");
-    digitalWrite(testpin, !digitalRead(testpin));
+    if (lastDriveMode != driveMode) {
+      lastDriveMode = driveMode;
+      switch (driveMode)
+      {
+        case 1:
+          can.setAccelerationMotor(50);
+          can.setDeaccelerationMotor(30);
+          break;
+        case 2:
+          can.setAccelerationMotor(12);
+          can.setDeaccelerationMotor(8);
+          break;
+        case 3:
+          can.setAccelerationMotor(4);
+          can.setDeaccelerationMotor(3);
+          break;
+      }
     }
-    float current1 = can.getCurrentLeftMotor();
-    Serial.println(current1);
-    float current2 = can.getCurrentRightMotor();
-     Serial.println(current2);
-    Serial.println(can.getSpeedLeftMotor());
+  }
+  */
+  if (xbee.checkForNewData())
+  {
+    xbee.getJoystickData(&motorValues, &turretValues);
+    int lMotor, rMotor;
+    JoyToDiff(motorValues.LeftMotor, motorValues.RightMotor, &lMotor, &rMotor);
+    can.setRightMotorSpeed(rMotor);
+    can.setLeftMotorSpeed(lMotor);
+    int driveMode = xbee.getDriveMode();
+    if (lastDriveMode != driveMode) {
+      lastDriveMode = driveMode;
+      switch (driveMode)
+      {
+        case 1:
+          can.setAccelerationMotor(50);
+          can.setDeaccelerationMotor(30);
+          break;
+        case 2:
+          can.setAccelerationMotor(12);
+          can.setDeaccelerationMotor(8);
+          break;
+        case 3:
+          can.setAccelerationMotor(2);
+          can.setDeaccelerationMotor(1);
+          break;
+      }
+    }
+  }
+  if ((millis() - savedTimestamp) > 100)
+  {
+    float inputVoltage = can.getInputVoltage();
+    float currentLeftMotor = can.getCurrentLeftMotor();
+    float currentRightMotor = can.getCurrentRightMotor();
+    int speedLeftMotor = can.getSpeedLeftMotor();
+    int speedRightMotor = can.getSpeedRightMotor();
+    uint8_t msbInputVoltage = (uint8_t) inputVoltage;
+    uint8_t lsbInputVoltage = (uint8_t) ((inputVoltage - msbInputVoltage) * 100);
+    uint8_t msbCurrentLeftMotor = (uint8_t) currentLeftMotor;
+    uint8_t lsbCurrentLeftMotor = (uint8_t) ((currentLeftMotor - msbCurrentLeftMotor) * 100);
+    uint8_t msbCurrentRightMotor = (uint8_t) currentRightMotor;
+    uint8_t lsbCurrentRightMotor = (uint8_t) ((currentRightMotor - msbCurrentRightMotor) * 100);
+    uint8_t msbSpeedLeftMotor = 0xFF & (speedLeftMotor >> 8);
+    uint8_t lsbSpeedLeftMotor = 0xFF & speedLeftMotor;
+    uint8_t msbSpeedRightMotor = 0xFF & (speedRightMotor >> 8);
+    uint8_t lsbSpeedRightMotor = 0xFF & speedRightMotor;
+    char message[11];
+    message[0] = msbInputVoltage;
+    message[1] = lsbInputVoltage;
+    message[2] = msbCurrentLeftMotor;
+    message[3] = lsbCurrentLeftMotor;
+    message[4] = msbCurrentRightMotor;
+    message[5] = lsbCurrentRightMotor;
+    message[6] = msbSpeedLeftMotor;
+    message[7] = lsbSpeedLeftMotor;
+    message[8] = msbSpeedRightMotor;
+    message[9] = lsbSpeedRightMotor;
+    message[10] = ':';
+    for (int i = 0; i < 11; i ++) {
+      Serial8.print(message[i]);
+    }
+    savedTimestamp = millis();
+  }
+  //Serial.println(can.getSpeedRightMotor());
+}
 
-    Serial.println(can.getSpeedRightMotor());
+void serialEvent8() {
+  xbee.readXbeeData();
+}
 
-
-
-  delay(18);
+void setFlag(void) {
+  // check if the interrupt is enabled
+  if (!enableInterrupt) {
+    return;
+  }
+  receiveFlag = true;
 }
 
 void JoyToDiff(int x, int y, int *lMotor, int *rMotor) {
-  int nJoyX = map(x, 0, 800, -128, 127);
-  int nJoyY = map(y, 0, 800, -128, 127);
+  int nJoyX = map(x, 0, 255, -128, 127);
+  int nJoyY = map(y, 0, 255, -128, 127);
   float fPivYLimit = 32.0;
   int     nMotMixL;
   int     nMotMixR;
